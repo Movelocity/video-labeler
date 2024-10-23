@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useRef, useCallback, memo } from 'react';
 import ReactPlayer from 'react-player'
-import BoxesLayer from './BoxesLayer/index';
+import BoxesLayer, {type AnchorBox} from './BoxesLayer/index';
 
 const px = (n: number) => `${n}px`
 const second2time = (s: number) => {
@@ -75,9 +75,11 @@ type Shape = {
   h: number
 }
 
+const demo_vid_url = "http://localhost:8888/file/MOV_0001.MP4"
+
 export const Player = memo(() => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const videoPlayer = useVideoPlayer("http://localhost:8888/video/penguins.mp4");
+  const videoPlayer = useVideoPlayer(demo_vid_url);
   const [isDragging, setIsDragging] = useState(false);
 
   const videoShape: Shape = {
@@ -115,31 +117,33 @@ export const Player = memo(() => {
     console.log('mouse down')
     updateActivaProgress(e.clientX);
   }, []);
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement> | MouseEvent) => {
-    if (!isDragging || !e.currentTarget) return;
-    updateActivaProgress(e.clientX)
-  }, [isDragging, videoPlayer]);
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-  const handleMouseLeave = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-  // 视频播放进度条相关事件
-  useEffect(() => {
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove as any);
-      window.addEventListener('mouseup', handleMouseUp);
-      window.addEventListener('mouseleave', handleMouseUp);
-      window.addEventListener('mouseleave', handleMouseLeave);
-    }
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove as any);
-      window.removeEventListener('mouseup', handleMouseUp);
-      window.removeEventListener('mouseleave', handleMouseUp);
-      window.removeEventListener('mouseleave', handleMouseLeave);
-    };
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  // const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement> | MouseEvent) => {
+  //   if (!isDragging || !e.currentTarget) return;
+  //   updateActivaProgress(e.clientX)
+  // }, [isDragging, videoPlayer]);
+  // const handleMouseUp = useCallback(() => {
+  //   setIsDragging(false);
+  // }, []);
+  // const handleMouseLeave = useCallback(() => {
+  //   setIsDragging(false);
+  // }, []);
+  // // 视频播放进度条相关事件
+  // useEffect(() => {
+  //   if (isDragging) {
+  //     console.log('bind listeners')
+  //     window.addEventListener('mousemove', handleMouseMove as any);
+  //     window.addEventListener('mouseup', handleMouseUp);
+  //     window.addEventListener('mouseleave', handleMouseUp);
+  //     window.addEventListener('mouseleave', handleMouseLeave);
+  //   }
+  //   return () => {
+  //     console.log('clear listeners')
+  //     window.removeEventListener('mousemove', handleMouseMove as any);
+  //     window.removeEventListener('mouseup', handleMouseUp);
+  //     window.removeEventListener('mouseleave', handleMouseUp);
+  //     window.removeEventListener('mouseleave', handleMouseLeave);
+  //   };
+  // }, [isDragging, handleMouseMove, handleMouseUp]);
 
   const [hasWindow, setHasWindow] = useState(false);
   useEffect(() => {

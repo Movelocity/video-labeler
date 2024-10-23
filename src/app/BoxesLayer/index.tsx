@@ -5,7 +5,7 @@ const randomColor = () => {
   return `hsl(${Math.random() * 360}, 70%, 50%)`;
 }
 
-type AnchorBox = {
+export type AnchorBox = {
   sx: number
   sy: number
   w: number
@@ -41,6 +41,22 @@ const draw = (canvas: HTMLCanvasElement, boxes: AnchorBox[], activeIndex: number
     ctx.fillStyle = 'white';
     ctx.fillText(box.label, textX, textY-2);
   })
+}
+
+type Point = {
+  x: number
+  y: number
+}
+
+const pointCollidesBox = (point: Point, boxes: AnchorBox[]): number => {
+  for (let i = 0; i < boxes.length; i++) {
+    const box = boxes[i];
+    if (
+      point.x >= box.sx && point.x <= box.sx + box.w &&
+      point.y >= box.sy && point.y <= box.sy + box.h
+    )  return i;
+  }
+  return -1;
 }
 
 type BoxesLayerProps = {
@@ -142,20 +158,95 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className}) => {
     }
   }, [])
 
-  // const handleAnchorClick = useCallback((e: React.MouseEvent<HTMLDivElement>, anchor: AnchorBox) => {
-  //   e.stopPropagation();
-  //   console.log(anchor);
-  // }, []);
 
-  // useEffect(() => {
-  //   if(canvasRef.current) {
-  //     draw(canvasRef.current, anchorBoxes)
-  //     console.log('redraw')
-  //   }
-  // }, [anchorBoxes]);
+  const drawCircle = (x:number, y:number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return
+    const context = canvas.getContext('2d');
+    if (!context) return
+
+    context.beginPath();
+    context.arc(x, y, 5, 0, Math.PI * 2, true);
+    context.fillStyle = 'cyan';
+    context.fill();
+  };
+
+  const getRelPoint = (point: Point):Point => {
+    if (!canvasRef.current) return point
+    return {
+      x: point.x / canvasRef.current.width, 
+      y: point.y / canvasRef.current.height
+    }
+  }
+
+  const pointOffet = useRef<Point>({x: 0, y: 0})
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!canvasRef.current) return
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const point = getRelPoint({x, y})
+    const collision = pointCollidesBox(point, boxesRef.current)
+    
+    if (collision > -1) {
+      tgBoxIdx.current = collision
+      draw(canvasRef.current!, boxesRef.current, tgBoxIdx.current)
+
+      // drawCircle(x, y);
+      const box = boxesRef.current[tgBoxIdx.current]
+      pointOffet.current = {
+        x: point.x - box.sx, 
+        y: point.y - box.sy
+      }
+      setIsDragging(true)
+    }
+  };
+
+  const [isDragging, setIsDragging] = useState(false);
+  
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement> | MouseEvent) => {
+    if (!isDragging || !e.currentTarget) return
+    if (!canvasRef.current) return
+    if (tgBoxIdx.current === -1) return
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const point = getRelPoint({x, y})
+    const box = boxesRef.current[tgBoxIdx.current]
+    box.sx = point.x - pointOffet.current.x
+    box.sy = point.y - pointOffet.current.y
+    boxesRef.current[tgBoxIdx.current] = box
+    draw(canvasRef.current!, boxesRef.current, tgBoxIdx.current)
+  }, [isDragging]);
+  const handleMouseUp = useCallback(() => {
+    console.log('mouse up')
+    setIsDragging(false);
+    tgBoxIdx.current = -1
+  }, []);
+  const handleMouseLeave = useCallback(() => {
+    console.log('mouse leave')
+    setIsDragging(false);
+    tgBoxIdx.current = -1
+  }, []);
+  useEffect(() => {
+    if (isDragging) {
+      console.log('bind listeners')
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('mouseleave', handleMouseUp);
+      window.addEventListener('mouseleave', handleMouseLeave);
+    }
+    return () => {
+      console.log('clear listeners')
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mouseleave', handleMouseUp);
+      window.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   return (
-    <canvas className={className??""} ref={canvasRef} width={width} height={height} />
+    <canvas className={className+" select-none"} ref={canvasRef} width={width} height={height} onMouseDown={handleMouseDown}/>
   )
 }
 
