@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文件浏览器</title>
+<!-- Materialize CSS -->
+<!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet"> -->
+<style>
+  body {
+    background-color: #1e1e1e;
+    color: #ffffff;
+  }
+
+  .container {
+    margin: 0 auto;
+    margin-top: 50px;
+    max-width: 800px;
+  }
+
+  .file-list {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  .file-list-item {
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+  }
+
+  .file-list-item:hover {
+    background-color: #333333;
+  }
+
+  .back-button {
+    margin-bottom: 20px;
+    cursor: pointer;
+    color: #42a5f5;
+  }
+
+  .icon {
+    margin: 0 10px;
+  }
+
+  .file-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+  }
+
+  .file-info {
+    display: flex;
+    flex-direction: column;
+    text-align: right;
+    font-size: 0.9em;
+    color: #aaaaaa;
+    padding-right: 10px;
+  }
+
+  .flex-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .justify-between {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  a:hover { text-decoration: underline; }
+  a { color: white; text-decoration: none; flex-grow: 1; }
+
+  .text-btn {
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    margin-right: 10px;
+  }
+  .text-btn:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="container">
+  <span id="back-button" class="back-button" onclick="goBack()">返回上一级</span>
+  <ul id="file-list" class="file-list"></ul>
+</div>
+
+<!-- Materialize JS and dependencies -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script>
+let pathStack = [];
+
+async function fetchFiles(path = '') {
+  try {
+    const response = await fetch('/files-detail' + path);
+    if (!response.ok) {
+      throw new Error('Failed to fetch files');
+    }
+    const files = await response.json();
+    renderFileList(files, path);
+    pathStack.push(path);
+    toggleBackButton();
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+function formatBytes(bytes) {
+  if (bytes < 0) return ''+bytes;
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let index = 0;
+  while (bytes >= 1024 && index < units.length - 1) {
+    bytes /= 1024;
+    index++;
+  }
+  return `${bytes.toFixed(2)} ${units[index]}`;
+}
+
+const copyToClipboard = (text) => {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed'; // 避免布局抖动
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+
+  try {
+    const successful = document.execCommand('copy');
+    const msg = successful ? '复制成功: ' : '复制失败';
+  } catch (err) {
+    console.error('复制失败: ', err);
+  }
+
+  document.body.removeChild(textarea);
+}
+const copy_curl_command = (url) => {
+  const command = 'curl -O ' + location.origin + '/' + url
+  copyToClipboard(command)
+} 
+
+function renderFileList(files, currentPath) {
+  const fileList = document.getElementById('file-list');
+  fileList.innerHTML = '';
+
+  files.forEach(file => {
+    const listItem = document.createElement('li');
+    listItem.className = 'file-list-item';
+    const fileUrl = `file${currentPath}/${file.name}`;
+    let iconAndName = '';
+    let fileInfo = '';
+    if (file.type === 'file') {
+      iconAndName = `<div class="justify-between"><span class="icon">📄</span><a href="${fileUrl}">${file.name}</a></div>`;
+      fileInfo = `<div class="file-info"><span>${formatBytes(file.size)}</span><span>${file.modified_time.split('.')[0].replace('T', ' ')}</span></div>`;
+      const btn = `<div class="text-btn" onclick="copy_curl_command('${fileUrl}')">curl</div>`
+      fileInfo = `<div class='flex-row'>${btn}${fileInfo}</div>`
+    } else {
+      iconAndName = `<div class="justify-between"> <span class="icon">📁</span><a>${file.name}</a> </div>`;
+    }
+    listItem.innerHTML = iconAndName + fileInfo;
+
+    if (file.type === 'dir') {
+      listItem.onclick = () => fetchFiles(`${currentPath}/${file.name}`);
+    } else {
+      // listItem.onclick = () => {
+      //   const fileUrl = `file${currentPath}/${file.name}`;
+      //   window.open(fileUrl, '_blank');
+      // };
+    }
+
+    fileList.appendChild(listItem);
+  });
+}
+
+function goBack() {
+  if (pathStack.length > 1) {
+    pathStack.pop(); // Remove current path
+    const previousPath = pathStack.pop(); // Get previous path
+    fetchFiles(previousPath);
+  }
+}
+
+function toggleBackButton() {
+  const backButton = document.getElementById('back-button');
+  backButton.style.display = pathStack.length > 1 ? 'block' : 'none';
+}
+
+// Initial fetch
+fetchFiles();
+</script>
+</body>
+</html>
