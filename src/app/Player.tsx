@@ -75,7 +75,7 @@ type Shape = {
   h: number
 }
 
-const demo_vid_url = "http://localhost:8888/file/MOV_0001.MP4"
+const demo_vid_url = "http://localhost:8888/video/penguins.mp4"
 
 export const Player = memo(() => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();

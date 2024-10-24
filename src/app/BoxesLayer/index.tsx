@@ -23,7 +23,7 @@ const draw = (canvas: HTMLCanvasElement, boxes: AnchorBox[], activeIndex: number
   ctx.clearRect(0, 0, w, h)
 
   boxes.forEach((box, idx) => {
-    ctx.lineWidth = idx === activeIndex? 4: 2
+    ctx.lineWidth = idx === activeIndex? 3: 2
     ctx.strokeStyle = box.color
     ctx.strokeRect(box.sx * w, box.sy * h, box.w * w, box.h * h)
 
@@ -59,6 +59,19 @@ const pointCollidesBox = (point: Point, boxes: AnchorBox[]): number => {
   return -1;
 }
 
+const pointCollidesBoxCorner = (point: Point, boxes: AnchorBox[]): number => {
+  const deltaY = 0.01;
+  const deltaX = 0.02;
+  for (let i = 0; i < boxes.length; i++) {
+    const box = boxes[i];
+    if (
+      point.x >= box.sx + box.w - deltaX && point.x <= box.sx + box.w + deltaX &&
+      point.y >= box.sy + box.h - deltaY && point.y <= box.sy + box.h + deltaY
+    )  return i;
+  }
+  return -1;
+}
+
 type BoxesLayerProps = {
   // boxes: any[];
   width: number;
@@ -67,18 +80,34 @@ type BoxesLayerProps = {
 }
 const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [anchorBoxes, setAnchorBoxes] = useState<AnchorBox[]>([]);
+  // const [anchorBoxes, setAnchorBoxes] = useState<AnchorBox[]>([]);
   const boxesRef = useRef<AnchorBox[]>([]);
-  const updateBoxState = useCallback(() => {
-    setAnchorBoxes(boxesRef.current)
+  const refresh = () => {
     draw(canvasRef.current!, boxesRef.current, tgBoxIdx.current)
+  }
+  const updateBoxState = useCallback(() => {
+    // setAnchorBoxes(boxesRef.current)
+    refresh()
   }, [])
   const tgBoxIdx= useRef(-1);
 
   const keyDownHandler = useCallback((e: KeyboardEvent) => {
-    if(tgBoxIdx.current<0) return
-    // console.log(e.key)
+    switch (e.key) {
+      case 'n':
+        tgBoxIdx.current = (tgBoxIdx.current - 1 + boxesRef.current.length) % boxesRef.current.length;
+        break;
+      case 'm':
+        tgBoxIdx.current = (tgBoxIdx.current + 1) % boxesRef.current.length;
+        break;
+      case '1':
+        boxesRef.current.push({sx: 0.3, sy: 0.3, w:0.2, h:0.3, label:'test', color: randomColor()})
+        tgBoxIdx.current = boxesRef.current.length -1
+        break;
+      default:
+        break;
+    }
 
+    if(tgBoxIdx.current<0) return
     const target = boxesRef.current[tgBoxIdx.current]
     const step = 0.01;
     switch (e.key) {
@@ -118,20 +147,6 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className}) => {
         target.h =  Math.min(1, target.h + step); // Increase height
         boxesRef.current[tgBoxIdx.current] = target
         break;
-      case 'n':
-        // console.log('tgBoxIdx: ', tgBoxIdx.current, 'prev.len: ', boxesRef.current.length)
-        tgBoxIdx.current = (tgBoxIdx.current - 1 + boxesRef.current.length) % boxesRef.current.length;
-        // console.log('tgBoxId: ', tgBoxIdx.current)
-        break;
-      case 'm':
-        // console.log('tgBoxIdx: ', tgBoxIdx.current, 'prev.len: ', boxesRef.current.length)
-        tgBoxIdx.current = (tgBoxIdx.current + 1) % boxesRef.current.length;
-        // console.log('tgBoxId: ', tgBoxIdx.current)
-        break;
-      case '1':
-        boxesRef.current.push({sx: 0.3, sy: 0.3, w:0.2, h:0.3, label:'test', color: randomColor()})
-        tgBoxIdx.current = boxesRef.current.length -1
-        break;
       default:
         break; // Return previous state if no keys match
     }
@@ -147,17 +162,9 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className}) => {
     }
     updateBoxState()
     setTimeout(()=> {
-      if(canvasRef.current) draw(canvasRef.current, boxesRef.current, tgBoxIdx.current)}, 
-    500)  // 增加延时，等画布先加载
+      if(canvasRef.current) refresh() //draw(canvasRef.current, boxesRef.current, tgBoxIdx.current)
+    }, 500)  // 增加延时，等画布先加载
   }, [width]);
-
-  useEffect(()=> {
-    window.addEventListener('keydown', keyDownHandler)
-    return () => {
-      window.removeEventListener('keydown', keyDownHandler)
-    }
-  }, [])
-
 
   const drawCircle = (x:number, y:number) => {
     const canvas = canvasRef.current;
@@ -179,6 +186,7 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className}) => {
     }
   }
 
+  const [cursor, setCursor] = useState('default')
   const pointOffet = useRef<Point>({x: 0, y: 0})
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!canvasRef.current) return
@@ -186,67 +194,103 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className}) => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     const point = getRelPoint({x, y})
+  
+    const cornerCollision = pointCollidesBoxCorner(point, boxesRef.current)
+    if (cornerCollision > -1) {
+      tgBoxIdx.current = cornerCollision
+      // draw(canvasRef.current!, boxesRef.current, tgBoxIdx.current)
+      refresh()
+      setIsResizing(true)
+      setCursor('nw-resize')
+      console.log('cornerCollision', cornerCollision)
+      return
+    }
+
     const collision = pointCollidesBox(point, boxesRef.current)
-    
     if (collision > -1) {
       tgBoxIdx.current = collision
-      draw(canvasRef.current!, boxesRef.current, tgBoxIdx.current)
-
-      // drawCircle(x, y);
+      // draw(canvasRef.current!, boxesRef.current, tgBoxIdx.current)
+      refresh()
       const box = boxesRef.current[tgBoxIdx.current]
       pointOffet.current = {
         x: point.x - box.sx, 
         y: point.y - box.sy
       }
       setIsDragging(true)
+      setCursor('move')
+    } else {
+      tgBoxIdx.current = -1
+      refresh()
     }
   };
 
   const [isDragging, setIsDragging] = useState(false);
-  
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement> | MouseEvent) => {
-    if (!isDragging || !e.currentTarget) return
+  const [isResizing, setIsResizing] = useState(false);
+  const mouseMoveBox = useCallback((e: React.MouseEvent<HTMLDivElement> | MouseEvent) => {
+    if(!e.currentTarget) return
     if (!canvasRef.current) return
     if (tgBoxIdx.current === -1) return
+    if(!isDragging && !isResizing) return
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     const point = getRelPoint({x, y})
     const box = boxesRef.current[tgBoxIdx.current]
-    box.sx = point.x - pointOffet.current.x
-    box.sy = point.y - pointOffet.current.y
-    boxesRef.current[tgBoxIdx.current] = box
-    draw(canvasRef.current!, boxesRef.current, tgBoxIdx.current)
-  }, [isDragging]);
+
+    if(isDragging){
+      box.sx = point.x - pointOffet.current.x
+      box.sy = point.y - pointOffet.current.y
+      boxesRef.current[tgBoxIdx.current] = box
+      // draw(canvasRef.current!, boxesRef.current, tgBoxIdx.current)
+    } else if (isResizing) {
+      box.w = point.x - box.sx
+      box.h = point.y -box.sy
+      boxesRef.current[tgBoxIdx.current] = box
+      // draw(canvasRef.current!, boxesRef.current, tgBoxIdx.current)
+    }
+    refresh()
+    
+  }, [isDragging, isResizing]);
   const handleMouseUp = useCallback(() => {
     console.log('mouse up')
     setIsDragging(false);
-    tgBoxIdx.current = -1
-  }, []);
-  const handleMouseLeave = useCallback(() => {
-    console.log('mouse leave')
-    setIsDragging(false);
-    tgBoxIdx.current = -1
+    setIsResizing(false)
+    setCursor('default')
   }, []);
   useEffect(() => {
-    if (isDragging) {
+    if (isDragging || isResizing) {
       console.log('bind listeners')
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-      window.addEventListener('mouseleave', handleMouseUp);
-      window.addEventListener('mouseleave', handleMouseLeave);
+      window.addEventListener('mousemove', mouseMoveBox);
     }
     return () => {
       console.log('clear listeners')
-      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mousemove', mouseMoveBox);
+    };
+  }, [isDragging, isResizing, mouseMoveBox]);
+
+  // const handleMouseEnter = useCallback(() => {
+  //   console.log('mouse enter')
+  //   setIsDragging(false);
+  // }, []);
+  useEffect(()=> {
+    window.addEventListener('keydown', keyDownHandler)
+    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mouseleave', handleMouseUp);
+    return () => {
+      window.removeEventListener('keydown', keyDownHandler)
       window.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('mouseleave', handleMouseUp);
-      window.removeEventListener('mouseleave', handleMouseLeave);
-    };
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+    }
+  }, [])
 
   return (
-    <canvas className={className+" select-none"} ref={canvasRef} width={width} height={height} onMouseDown={handleMouseDown}/>
+    <canvas 
+      className={className+" select-none"}
+      style={{cursor: cursor}}
+      ref={canvasRef} width={width} height={height} 
+      onMouseDown={handleMouseDown} 
+      // onMouseEnter={handleMouseEnter}
+    />
   )
 }
 
