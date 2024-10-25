@@ -85,10 +85,10 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className}) => {
   const refresh = () => {
     draw(canvasRef.current!, boxesRef.current, tgBoxIdx.current)
   }
-  const updateBoxState = useCallback(() => {
-    // setAnchorBoxes(boxesRef.current)
-    refresh()
-  }, [])
+  // const updateBoxState = useCallback(() => {
+  //   // setAnchorBoxes(boxesRef.current)
+  //   refresh()
+  // }, [])
   const tgBoxIdx= useRef(-1);
 
   const keyDownHandler = useCallback((e: KeyboardEvent) => {
@@ -107,7 +107,7 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className}) => {
         break;
     }
 
-    if(tgBoxIdx.current<0) return
+    if(tgBoxIdx.current<0) return // 以下的按键匹配动作需要有对应的框
     const target = boxesRef.current[tgBoxIdx.current]
     const step = 0.01;
     switch (e.key) {
@@ -147,11 +147,15 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className}) => {
         target.h =  Math.min(1, target.h + step); // Increase height
         boxesRef.current[tgBoxIdx.current] = target
         break;
+      case 'Escape':
+        boxesRef.current.splice(tgBoxIdx.current, 1)
+        tgBoxIdx.current = -1
+        break;
       default:
         break; // Return previous state if no keys match
     }
 
-    updateBoxState()
+    refresh()
   }, [])
 
   useEffect(() => {
@@ -160,7 +164,7 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className}) => {
       boxesRef.current.push({sx: 0.3, sy: 0.3, w:0.2, h:0.3, label:'test', color: randomColor()})
       tgBoxIdx.current = 0
     }
-    updateBoxState()
+    refresh()
     setTimeout(()=> {
       if(canvasRef.current) refresh() //draw(canvasRef.current, boxesRef.current, tgBoxIdx.current)
     }, 500)  // 增加延时，等画布先加载
@@ -188,6 +192,8 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className}) => {
 
   const [cursor, setCursor] = useState('default')
   const pointOffet = useRef<Point>({x: 0, y: 0})
+  const isDragging = useRef(false)
+  const isResizing = useRef(false)
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!canvasRef.current) return
     const rect = canvasRef.current.getBoundingClientRect();
@@ -198,88 +204,89 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className}) => {
     const cornerCollision = pointCollidesBoxCorner(point, boxesRef.current)
     if (cornerCollision > -1) {
       tgBoxIdx.current = cornerCollision
-      // draw(canvasRef.current!, boxesRef.current, tgBoxIdx.current)
       refresh()
-      setIsResizing(true)
-      setCursor('nw-resize')
-      console.log('cornerCollision', cornerCollision)
+      isResizing.current = true
+      // console.log('cornerCollision', cornerCollision)
       return
     }
 
     const collision = pointCollidesBox(point, boxesRef.current)
     if (collision > -1) {
       tgBoxIdx.current = collision
-      // draw(canvasRef.current!, boxesRef.current, tgBoxIdx.current)
       refresh()
       const box = boxesRef.current[tgBoxIdx.current]
       pointOffet.current = {
         x: point.x - box.sx, 
         y: point.y - box.sy
       }
-      setIsDragging(true)
-      setCursor('move')
+      // setIsDragging(true)
+      isDragging.current = true
+      // setCursor('move')
     } else {
-      tgBoxIdx.current = -1
+      boxesRef.current.push({sx: point.x, sy: point.y, w:0.01, h:0.02, label:'test', color: randomColor()})
+      tgBoxIdx.current = boxesRef.current.length -1
+      // setIsResizing(true)
+      isResizing.current = true
       refresh()
     }
   };
 
-  const [isDragging, setIsDragging] = useState(false);
-  const [isResizing, setIsResizing] = useState(false);
-  const mouseMoveBox = useCallback((e: React.MouseEvent<HTMLDivElement> | MouseEvent) => {
+  const mouseMoveBox = (e: React.MouseEvent<HTMLDivElement> | MouseEvent) => {
     if(!e.currentTarget) return
     if (!canvasRef.current) return
-    if (tgBoxIdx.current === -1) return
-    if(!isDragging && !isResizing) return
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     const point = getRelPoint({x, y})
+    const cornerCollision = pointCollidesBoxCorner(point, boxesRef.current)
+    if (cornerCollision > -1) {
+      setCursor('nw-resize')
+    } else {
+      setCursor('default')
+    }
+    if (tgBoxIdx.current === -1) return
+    if(!isDragging && !isResizing) return
+    
     const box = boxesRef.current[tgBoxIdx.current]
-
-    if(isDragging){
+    if(isDragging.current){
       box.sx = point.x - pointOffet.current.x
       box.sy = point.y - pointOffet.current.y
       boxesRef.current[tgBoxIdx.current] = box
-      // draw(canvasRef.current!, boxesRef.current, tgBoxIdx.current)
-    } else if (isResizing) {
-      box.w = point.x - box.sx
-      box.h = point.y -box.sy
+      setCursor('move')
+    } else if (isResizing.current) {
+      box.w = Math.max(point.x - box.sx, 0)  // 0.02 以内删掉
+      box.h = Math.max(point.y - box.sy, 0)  // 0.04 以内删掉
       boxesRef.current[tgBoxIdx.current] = box
-      // draw(canvasRef.current!, boxesRef.current, tgBoxIdx.current)
     }
     refresh()
-    
-  }, [isDragging, isResizing]);
+  }
+
   const handleMouseUp = useCallback(() => {
     console.log('mouse up')
-    setIsDragging(false);
-    setIsResizing(false)
+    isDragging.current = false
+    isResizing.current = false
     setCursor('default')
-  }, []);
-  useEffect(() => {
-    if (isDragging || isResizing) {
-      console.log('bind listeners')
-      window.addEventListener('mousemove', mouseMoveBox);
-    }
-    return () => {
-      console.log('clear listeners')
-      window.removeEventListener('mousemove', mouseMoveBox);
-    };
-  }, [isDragging, isResizing, mouseMoveBox]);
 
-  // const handleMouseEnter = useCallback(() => {
-  //   console.log('mouse enter')
-  //   setIsDragging(false);
-  // }, []);
+    if (tgBoxIdx.current !== -1) {  // 框的尺寸过小则移除
+      const box = boxesRef.current[tgBoxIdx.current]
+      if(box.w < 0.02 || box.h < 0.04){
+        boxesRef.current.splice(tgBoxIdx.current, 1)
+        tgBoxIdx.current = -1
+      }
+      refresh()
+    }
+  }, []);
+
   useEffect(()=> {
     window.addEventListener('keydown', keyDownHandler)
     window.addEventListener('mouseup', handleMouseUp);
     window.addEventListener('mouseleave', handleMouseUp);
+    window.addEventListener('mousemove', mouseMoveBox);
     return () => {
       window.removeEventListener('keydown', keyDownHandler)
       window.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('mouseleave', handleMouseUp);
+      window.removeEventListener('mousemove', mouseMoveBox);
     }
   }, [])
 

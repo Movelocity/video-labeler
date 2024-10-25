@@ -117,33 +117,7 @@ export const Player = memo(() => {
     console.log('mouse down')
     updateActivaProgress(e.clientX);
   }, []);
-  // const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement> | MouseEvent) => {
-  //   if (!isDragging || !e.currentTarget) return;
-  //   updateActivaProgress(e.clientX)
-  // }, [isDragging, videoPlayer]);
-  // const handleMouseUp = useCallback(() => {
-  //   setIsDragging(false);
-  // }, []);
-  // const handleMouseLeave = useCallback(() => {
-  //   setIsDragging(false);
-  // }, []);
-  // // 视频播放进度条相关事件
-  // useEffect(() => {
-  //   if (isDragging) {
-  //     console.log('bind listeners')
-  //     window.addEventListener('mousemove', handleMouseMove as any);
-  //     window.addEventListener('mouseup', handleMouseUp);
-  //     window.addEventListener('mouseleave', handleMouseUp);
-  //     window.addEventListener('mouseleave', handleMouseLeave);
-  //   }
-  //   return () => {
-  //     console.log('clear listeners')
-  //     window.removeEventListener('mousemove', handleMouseMove as any);
-  //     window.removeEventListener('mouseup', handleMouseUp);
-  //     window.removeEventListener('mouseleave', handleMouseUp);
-  //     window.removeEventListener('mouseleave', handleMouseLeave);
-  //   };
-  // }, [isDragging, handleMouseMove, handleMouseUp]);
+
 
   const [hasWindow, setHasWindow] = useState(false);
   useEffect(() => {
