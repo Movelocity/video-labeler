@@ -36,10 +36,10 @@ const draw = (canvas: HTMLCanvasElement, boxes: AnchorBox[], activeIndex: number
     textX = box.sx * w
     textY = box.sy * h
     ctx.fillStyle = box.color
-    ctx.fillRect(textX-1, textY - textHeight, textWidth+4, textHeight)
+    ctx.fillRect(textX-1, textY - textHeight, textWidth+8, textHeight)
 
     ctx.fillStyle = 'white';
-    ctx.fillText(box.label, textX, textY-2);
+    ctx.fillText(box.label, textX+4, textY-2);
   })
 }
 
@@ -77,8 +77,9 @@ type BoxesLayerProps = {
   width: number;
   height: number;
   className?: string;
+  labeltext?: string;
 }
-const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className}) => {
+const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className, labeltext}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // const [anchorBoxes, setAnchorBoxes] = useState<AnchorBox[]>([]);
   const boxesRef = useRef<AnchorBox[]>([]);
@@ -91,7 +92,7 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className}) => {
   // }, [])
   const tgBoxIdx= useRef(-1);
 
-  const keyDownHandler = useCallback((e: KeyboardEvent) => {
+  const keyDownHandler = useCallback((e: React.KeyboardEvent) => {
     switch (e.key) {
       case 'n':
         tgBoxIdx.current = (tgBoxIdx.current - 1 + boxesRef.current.length) % boxesRef.current.length;
@@ -159,12 +160,12 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className}) => {
   }, [])
 
   useEffect(() => {
-    console.log('effect, suprise')
-    if(boxesRef.current.length === 0) {
-      boxesRef.current.push({sx: 0.3, sy: 0.3, w:0.2, h:0.3, label:'test', color: randomColor()})
-      tgBoxIdx.current = 0
-    }
-    refresh()
+    console.log('window update')
+    // if(boxesRef.current.length === 0) {
+    //   boxesRef.current.push({sx: 0.3, sy: 0.3, w:0.2, h:0.3, label:labeltext??'test', color: randomColor()})
+    //   tgBoxIdx.current = 0
+    // }
+    // refresh()
     setTimeout(()=> {
       if(canvasRef.current) refresh() //draw(canvasRef.current, boxesRef.current, tgBoxIdx.current)
     }, 500)  // 增加延时，等画布先加载
@@ -223,7 +224,7 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className}) => {
       isDragging.current = true
       // setCursor('move')
     } else {
-      boxesRef.current.push({sx: point.x, sy: point.y, w:0.01, h:0.02, label:'test', color: randomColor()})
+      boxesRef.current.push({sx: point.x, sy: point.y, w:0.01, h:0.02, label:labeltext?labeltext:'empty', color: randomColor()})
       tgBoxIdx.current = boxesRef.current.length -1
       // setIsResizing(true)
       isResizing.current = true
@@ -278,12 +279,12 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className}) => {
   }, []);
 
   useEffect(()=> {
-    window.addEventListener('keydown', keyDownHandler)
+    // window.addEventListener('keydown', keyDownHandler)
     window.addEventListener('mouseup', handleMouseUp);
     window.addEventListener('mouseleave', handleMouseUp);
     window.addEventListener('mousemove', mouseMoveBox);
     return () => {
-      window.removeEventListener('keydown', keyDownHandler)
+      // window.removeEventListener('keydown', keyDownHandler)
       window.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('mouseleave', handleMouseUp);
       window.removeEventListener('mousemove', mouseMoveBox);
@@ -296,7 +297,6 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className}) => {
       style={{cursor: cursor}}
       ref={canvasRef} width={width} height={height} 
       onMouseDown={handleMouseDown} 
-      // onMouseEnter={handleMouseEnter}
     />
   )
 }

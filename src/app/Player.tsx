@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef, useCallback, memo } from 'react';
 import ReactPlayer from 'react-player'
 import BoxesLayer, {type AnchorBox} from './BoxesLayer/index';
+import DynamicInputs from './DynamicInputs';
 
 const px = (n: number) => `${n}px`
 const second2time = (s: number) => {
@@ -118,15 +119,15 @@ export const Player = memo(() => {
     updateActivaProgress(e.clientX);
   }, []);
 
-
   const [hasWindow, setHasWindow] = useState(false);
   useEffect(() => {
     if (typeof window !== "undefined") setHasWindow(true);
   }, []);
 
+  const [labelText, setLabelText] = useState('');
   return (
     <div className='flex flex-row pt-4'>
-      <div className='flex flex-col w-full h-full'>
+      <div className='flex flex-col w-[80%] h-full'>
         <div className='mx-auto relative bg-gray-500' style={{width: px(videoShape.w), height: px(videoShape.h)}}>
           { hasWindow && 
             <ReactPlayer
@@ -142,7 +143,7 @@ export const Player = memo(() => {
               onReady={videoPlayer.handleReady}
             />
           }
-          <BoxesLayer className='absolute top-0 left-0' width={videoShape.w} height={videoShape.h} />
+          <BoxesLayer className='absolute top-0 left-0' width={videoShape.w} height={videoShape.h} labeltext={labelText}/>
           {/* <canvas ref={canvasRef} className="absolute top-0 left-0" width={videoShape.w} height={videoShape.h}></canvas> */}
         </div>
         <div 
@@ -179,15 +180,9 @@ export const Player = memo(() => {
           </button>
         </div>
       </div>
-      {/* <div className='flex flex-col w-1/3'>
-        {anchorBoxes.map((box, idx) => (
-          <div key={idx} className='flex flex-row items-center'>
-            <div className=''>
-              {box.label}
-            </div>
-          </div>
-        ))}
-      </div> */}
+      <div className='flex flex-col w-48'>
+        <DynamicInputs onSelectText={setLabelText}/>
+      </div>
     </div>
   );
 })
