@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useRef, useCallback, memo } from 'react';
 import ReactPlayer from 'react-player'
-import BoxesLayer, {type AnchorBox} from './BoxesLayer/index';
+import BoxesLayer from './BoxesLayer';
 import DynamicInputs from './DynamicInputs';
 
 const px = (n: number) => `${n}px`

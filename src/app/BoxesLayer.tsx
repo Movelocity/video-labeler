@@ -1,18 +1,11 @@
 import { useEffect, useState, useRef, useCallback, memo } from 'react';
-
+import { AnchorBox } from '@/common/types'
 
 const randomColor = () => {
   return `hsl(${Math.random() * 360}, 70%, 50%)`;
 }
 
-export type AnchorBox = {
-  sx: number
-  sy: number
-  w: number
-  h: number
-  label: string
-  color: string
-}  // 数字全部采用小数 [0,1]
+
 
 const draw = (canvas: HTMLCanvasElement, boxes: AnchorBox[], activeIndex: number) => {
   if(!canvas) return
@@ -21,8 +14,8 @@ const draw = (canvas: HTMLCanvasElement, boxes: AnchorBox[], activeIndex: number
   const w = ctx.canvas.width
   const h = ctx.canvas.height
   ctx.clearRect(0, 0, w, h)
-
-  boxes.forEach((box, idx) => {
+  for(let idx=boxes.length-1; idx>=0; idx--){  // 不用 forEach 并发绘制，确保第一个框最后绘制
+    const box = boxes[idx]
     ctx.lineWidth = idx === activeIndex? 3: 2
     ctx.strokeStyle = box.color
     ctx.strokeRect(box.sx * w, box.sy * h, box.w * w, box.h * h)
@@ -40,7 +33,7 @@ const draw = (canvas: HTMLCanvasElement, boxes: AnchorBox[], activeIndex: number
 
     ctx.fillStyle = 'white';
     ctx.fillText(box.label, textX+4, textY-2);
-  })
+  }
 }
 
 type Point = {
@@ -213,9 +206,15 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className, labelt
 
     const collision = pointCollidesBox(point, boxesRef.current)
     if (collision > -1) {
-      tgBoxIdx.current = collision
+      // move the collision box to the first element of array
+      const box = boxesRef.current[collision]
+      boxesRef.current.splice(collision, 1)
+      boxesRef.current.unshift(box)
+
+      // tgBoxIdx.current = collision
+      tgBoxIdx.current = 0
       refresh()
-      const box = boxesRef.current[tgBoxIdx.current]
+      // const box = boxesRef.current[tgBoxIdx.current]
       pointOffet.current = {
         x: point.x - box.sx, 
         y: point.y - box.sy

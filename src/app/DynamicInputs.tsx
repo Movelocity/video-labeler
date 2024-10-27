@@ -1,37 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import cn from 'classnames'
+import { useMainStore, useStore } from '@/common/store'
 
 type DynamicInputsProps = {
   onSelectText: (text: string) => void
 }
 
 const DynamicInputs: React.FC<DynamicInputsProps> = ({onSelectText}) => {
-  const [inputs, setInputs] = useState(['']); // 初始状态只有一个空输入
+  // const [inputs, setInputs] = useState<string[]>(['']); // 初始状态只有一个空输入
+  const mainStore = useMainStore();
+  const inputs = useStore(state => state.editLabels)
+  const {setEditLabels} = mainStore.getState();
   const [activeIndex, setActiveIndex] = useState(-1); // 当前活跃的输入索引
+  const inputRefs = useRef<HTMLInputElement[]>([]);
   const containerRef = React.createRef<HTMLDivElement>();
   const changeActiveIndex = (index: number) => {
     setActiveIndex(index);
     onSelectText(inputs[index]);
   };
 
+  // 当inputs数组长度改变时，聚焦到最后一个input
+  useEffect(() => {
+    if (inputRefs.current.length > 0) {
+      (inputRefs.current[inputRefs.current.length - 1] as HTMLInputElement)?.focus();
+    }
+  }, [inputs.length]);
+
   const focusIndex = (idx:number) => {
     if(!containerRef.current) return;
     const inputElems = containerRef.current.querySelectorAll('input[type="text"]');
     if (inputElems.length > 0 && idx >= 0 && idx < inputElems.length) {
       (inputElems[idx] as HTMLInputElement).focus();
+      console.log('focusIndex', inputElems[idx])
     }
   }
 
   const addInput = () => {
-    setInputs([...inputs, '']);
+    setEditLabels([...inputs, '']);
     changeActiveIndex(inputs.length); // 将焦点设置到新添加的输入
-    setTimeout(()=>{focusIndex(inputs.length);}, 1000)
   }
 
   const handleInputChange = (index: number, value:string) => {
     const newInputs = [...inputs];
     newInputs[index] = value;
-    setInputs(newInputs);
+    setEditLabels(newInputs);
     onSelectText(value);
   }
 
@@ -64,12 +76,14 @@ const DynamicInputs: React.FC<DynamicInputsProps> = ({onSelectText}) => {
         >
           <div className={cn("w-4 min-w-4 cursor-pointer hover:bg-teal-700", activeIndex === index ? 'bg-teal-600': 'bg-gray-700')}></div>
           <input
+            ref={(el) => {if(el){inputRefs.current[index] = el}}}
             type="text"
             placeholder='输入标签名字'
             value={input}
             onChange={(e) => handleInputChange(index, e.target.value)}
             onKeyDown={handleKeyDown}
             className='px-2 m-2 w-36 bg-gray-600 rounded-sm outline-none text-white'
+            spellCheck={false}
           />
         </div>
       ))}
