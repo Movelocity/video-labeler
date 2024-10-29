@@ -93,67 +93,6 @@ async def get_video(file_path: str, request: Request):
     return StreamingResponse(iterfile(), headers=headers, media_type="video/mp4", status_code=status_code)
 
 
-# @app.get("/files/{file_path:path}", response_class=HTMLResponse)
-# async def list_files(file_path: str):
-#     full_path = os.path.join(base_directory, file_path)
-    
-#     if not os.path.isdir(full_path):
-#         raise HTTPException(status_code=404, detail="文件夹未找到")
-    
-#     items = os.listdir(full_path)
-    
-#     html_content = """
-# <html>
-# <head>
-# <style>
-#     body { background-color: #121212; color: #e0e0e0; font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-#     h2 { color: #ffffff; margin-bottom: 20px; }
-#     ul { style-type: none; padding: 0; }
-#     li { padding: 10px; display: flex; align-items: center; border-bottom: 1px dashed #333333; }
-#     a:hover { text-decoration: underline; }
-#     a { color: white; text-decoration: none; flex-grow: 1; }
-#     button { background-color: gray; color: #ffffff; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px; transition: background-color 0.3s; }
-#     button:hover { background-color: #cccccc; }
-# </style>
-# <script>
-# const copyToClipboard = (text) => {
-#     const textarea = document.createElement('textarea');
-#     textarea.value = text;
-#     textarea.style.position = 'fixed'; // 避免布局抖动
-#     document.body.appendChild(textarea);
-#     textarea.focus();
-#     textarea.select();
-
-#     try {
-#         const successful = document.execCommand('copy');
-#         const msg = successful ? '复制成功: ' : '复制失败';
-#     } catch (err) {
-#         console.error('复制失败: ', err);
-#     }
-
-#     document.body.removeChild(textarea);
-# }
-# const copy_curl_command = (url) => {
-#     const command = 'curl -O ' + location.origin + url
-#     copyToClipboard(command)
-# } 
-# </script>
-# </head>
-# <body>
-#     <h2>文件和文件夹列表</h2>
-#     <ul>
-# """
-#     for item in items:
-#         item_path = os.path.join(file_path, item)
-#         download_url = f"/file/{item_path}"
-#         if os.path.isdir(os.path.join(full_path, item)):
-#             html_content += f'<li><a href="/files/{item_path}">{item}/</a></li>'
-#         else:
-#             html_content += f"<li><a href='{download_url}'>{item}</a><button onclick=\"copy_curl_command('{download_url}')\">复制 curl</button></li>"
-#     html_content += "</ul></body></html>"
-    
-#     return html_content
-
 @app.get("/files-detail/{file_path:path}", response_class=JSONResponse)
 async def list_files_detail(file_path: str):
     full_path = os.path.join(base_directory, file_path)
