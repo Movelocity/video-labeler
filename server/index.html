@@ -96,7 +96,7 @@
 <script>
 let pathStack = [];
 
-async function fetchFiles(path = '') {
+async function fetchFiles(path = '/') {
   try {
     const response = await fetch('/files-detail' + path);
     if (!response.ok) {

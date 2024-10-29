@@ -76,7 +76,7 @@ type Shape = {
   h: number
 }
 
-const demo_vid_url = "http://localhost:8888/video/penguins.mp4"
+const demo_vid_url = "http://localhost:8888/file/ScreenRecording_2024.08.04-18.34.49.mp4"
 
 export const Player = memo(() => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
@@ -128,7 +128,7 @@ export const Player = memo(() => {
   return (
     <div className='flex flex-row pt-4'>
       <div className='flex flex-col w-[80%] h-full'>
-        <div className='mx-auto relative bg-gray-500' style={{width: px(videoShape.w), height: px(videoShape.h)}}>
+        <div className='mx-auto relative bg-gray-500 select-none' style={{width: px(videoShape.w), height: px(videoShape.h)}}>
           { hasWindow && 
             <ReactPlayer
               ref={videoPlayer.playerRef}

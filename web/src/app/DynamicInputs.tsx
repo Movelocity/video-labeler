@@ -9,7 +9,8 @@ type DynamicInputsProps = {
 const DynamicInputs: React.FC<DynamicInputsProps> = ({onSelectText}) => {
   // const [inputs, setInputs] = useState<string[]>(['']); // 初始状态只有一个空输入
   const mainStore = useMainStore();
-  const inputs = useStore(state => state.editLabels)
+  const editLabels = useStore(state => state.editLabels)
+  const [inputs, setInputs] = useState<string[]>([''])
   const {setEditLabels} = mainStore.getState();
   const [activeIndex, setActiveIndex] = useState(-1); // 当前活跃的输入索引
   const inputRefs = useRef<HTMLInputElement[]>([]);
@@ -26,6 +27,10 @@ const DynamicInputs: React.FC<DynamicInputsProps> = ({onSelectText}) => {
     }
   }, [inputs.length]);
 
+  useEffect(()=> {
+    setInputs(editLabels)
+  })
+
   const focusIndex = (idx:number) => {
     if(!containerRef.current) return;
     const inputElems = containerRef.current.querySelectorAll('input[type="text"]');
@@ -36,6 +41,7 @@ const DynamicInputs: React.FC<DynamicInputsProps> = ({onSelectText}) => {
   }
 
   const addInput = () => {
+    setInputs([...inputs, ''])
     setEditLabels([...inputs, '']);
     changeActiveIndex(inputs.length); // 将焦点设置到新添加的输入
   }
@@ -43,6 +49,7 @@ const DynamicInputs: React.FC<DynamicInputsProps> = ({onSelectText}) => {
   const handleInputChange = (index: number, value:string) => {
     const newInputs = [...inputs];
     newInputs[index] = value;
+    setInputs(newInputs)
     setEditLabels(newInputs);
     onSelectText(value);
   }
