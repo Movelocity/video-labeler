@@ -2,12 +2,12 @@
 
 # dependencies
 node_modules/
-/server/node_modules
-/web/node_modules
+server/node_modules
+web/node_modules
 /.pnp
 .pnp.js
 .yarn/install-state.gz
-
+web-react
 # testing
 /coverage
 

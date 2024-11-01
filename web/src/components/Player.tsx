@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useRef, useCallback, memo } from 'react';
 import ReactPlayer from 'react-player'
-import BoxesLayer from './BoxesLayer';
+import BoxesLayer, { type BoxesLayerHandle } from './BoxesLayer';
 import DynamicInputs from './DynamicInputs';
 
 const px = (n: number) => `${n}px`
@@ -76,13 +76,14 @@ type Shape = {
   h: number
 }
 
-const demo_vid_url = "http://localhost:8888/file/ScreenRecording_2024.08.04-18.34.49.mp4"
-
-export const Player = memo(() => {
+export const Player = memo((props: {video_name: string}) => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const videoPlayer = useVideoPlayer(demo_vid_url);
+  const videoPlayer = useVideoPlayer("http://localhost:8888/file/"+props.video_name);
+  const [labelText, setLabelText] = useState('');
   const [isDragging, setIsDragging] = useState(false);
+  const boxesLayerRef = useRef<BoxesLayerHandle>(null);
 
+  /** 视频原始比例，用于计算视频组件的宽高 */
   const videoShape: Shape = {
     w: windowHeight * 0.7 * videoPlayer.videoShapeRatio, 
     h: windowHeight * 0.7
@@ -92,6 +93,7 @@ export const Player = memo(() => {
   const timerApplySeek = useRef<NodeJS.Timeout | null>(null);
   const [activeProgress, setActiveProgress] = useState(0);
   const [isSeeking , setIsSeeking] = useState(false);
+  /** 鼠标点击时更新视频进度条。原本是拖动的逻辑，但有点延迟，所以改为点击后直接跳转。*/ 
   const updateActivaProgress = useCallback((clientX:number)=> {
     if (!progressBarRef.current) return;
     const rect = progressBarRef.current.getBoundingClientRect();
@@ -112,7 +114,7 @@ export const Player = memo(() => {
     }, 500);
   }, [])
 
-  // 鼠标事件跟踪
+  /**鼠标事件跟踪*/
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     setIsDragging(true);
     console.log('mouse down')
@@ -124,12 +126,30 @@ export const Player = memo(() => {
     if (typeof window !== "undefined") setHasWindow(true);
   }, []);
 
-  const [labelText, setLabelText] = useState('');
+  const saveCurrentLabeling = useCallback(() => {
+    console.log('save current labeling')
+    const boxes = boxesLayerRef.current?.getBoxes() || [];
+    if(boxes.length === 0) return;
+    
+    const data = {
+      video_name: props.video_name,
+      boxes: boxes.map(({ sx, sy, w, h, label }) => ({ sx, sy, w, h, label })),  // 只保留这几个属性
+      time: videoPlayer.progress
+    }
+    fetch('http://localhost:8888/save_label', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+  }, [videoPlayer.progress, boxesLayerRef.current?.getBoxes()])
+  
   return (
     <div className='flex flex-row pt-4'>
       <div className='flex flex-col w-[80%] h-full'>
         <div className='mx-auto relative bg-gray-500 select-none' style={{width: px(videoShape.w), height: px(videoShape.h)}}>
-          { hasWindow && 
+          { hasWindow && // 避免在服务端渲染时触发错误。视频播放器仅支持客户端渲染。
             <ReactPlayer
               ref={videoPlayer.playerRef}
               className='absolute top-0 left-0'
@@ -143,14 +163,21 @@ export const Player = memo(() => {
               onReady={videoPlayer.handleReady}
             />
           }
-          <BoxesLayer className='absolute top-0 left-0' width={videoShape.w} height={videoShape.h} labeltext={labelText}/>
-          {/* <canvas ref={canvasRef} className="absolute top-0 left-0" width={videoShape.w} height={videoShape.h}></canvas> */}
+          {/** 视频遮罩层，用来绘制目标框 */}
+          <BoxesLayer 
+            className='absolute top-0 left-0' 
+            width={videoShape.w} 
+            height={videoShape.h} 
+            labeltext={labelText}
+            ref={boxesLayerRef}
+          />
         </div>
         <div 
           className='mx-auto mt-0 relative h-8 cursor-pointer' 
           style={{width: px(videoShape.w)}}
           onMouseDown={handleMouseDown}
         >
+          {/** 时间轴 */}
           <div className='text-slate-300 text-xs w-full h-2 flex flex-row justify-between'>
             <span>00:00</span>
             <span>{second2time(videoPlayer.duration*0.25)}</span>
@@ -165,22 +192,24 @@ export const Player = memo(() => {
         </div>
 
         <div className='flex flex-row p-3 mx-auto'>
+          {/** 播放控制按钮 */}
           <button 
             className='cursor-pointer bg-green-600 hover:bg-green-500 rounded-md px-2'
             onClick={videoPlayer.togglePlay}
           >
             {videoPlayer.playing ? 'Pause' : 'Play'}
           </button>
-
+          {/** 保存按钮 */}
           <button 
             className='cursor-pointer bg-zinc-600 hover:bg-zinc-500 rounded-md px-2 ml-2'
-            onClick={() => videoPlayer.seekTo(0.5)}
+            onClick={saveCurrentLabeling}
           >
-            Seek Half
+            Save Frame
           </button>
         </div>
       </div>
       <div className='flex flex-col w-48'>
+        {/** 提示文本 */}
         <DynamicInputs onSelectText={setLabelText}/>
       </div>
     </div>

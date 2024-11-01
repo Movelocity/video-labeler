@@ -1,8 +1,13 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
+const cors = require('cors');
+const { v4: uuidv4 } = require('uuid'); 
 
 const app = express();
+app.use(cors());
+app.use(bodyParser.json());  // 使用 body-parser 中间件解析 JSON 请求体
 
 // Get base directory from command line arguments
 if (process.argv.length < 3) {
@@ -11,6 +16,10 @@ if (process.argv.length < 3) {
 }
 
 const baseDirectory = process.argv[2];
+const cacheDirectory = path.join(baseDirectory, '.cache');
+  if (!fs.existsSync(cacheDirectory)) {
+      fs.mkdirSync(cacheDirectory);
+  }
 
 // Check if the directory exists
 if (!fs.existsSync(baseDirectory) || !fs.lstatSync(baseDirectory).isDirectory()) {
@@ -92,6 +101,45 @@ app.get('/files-detail/*', (req, res) => {
     });
 
     res.json(fileDetails);
+});
+
+// Save label endpoint
+app.post('/save_label', (req, res) => {
+  const { video_name, boxes } = req.body;
+  const filePath = path.join(cacheDirectory, `${video_name}.json`);
+
+  // Create a new label object with unique IDs
+  const newBoxes = boxes.map(box => ({ ...box, uid: uuidv4() }));
+
+  let data = { metadata: {}, labels: [] };
+
+  // Check if the file already exists
+  if (fs.existsSync(filePath)) {
+      const fileContent = fs.readFileSync(filePath, 'utf-8');
+      data = JSON.parse(fileContent);
+  }
+
+  // Add new boxes to labels
+  data.labels.push(...newBoxes);
+
+  // Write updated data back to the file
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+  res.status(200).send({ message: 'Labels saved successfully' });
+});
+
+// Read label endpoint
+app.get('/read_label/:video_name', (req, res) => {
+  const { video_name } = req.params;
+  const filePath = path.join(cacheDirectory, `${video_name}.json`);
+
+  // Check if the file exists
+  if (fs.existsSync(filePath)) {
+      const fileContent = fs.readFileSync(filePath, 'utf-8');
+      const data = JSON.parse(fileContent);
+      res.status(200).send(data);
+  } else {
+      res.status(404).send({ message: 'Label not found' });
+  }
 });
 
 // Start server

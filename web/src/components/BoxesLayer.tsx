@@ -1,11 +1,9 @@
-import { useEffect, useState, useRef, useCallback, memo } from 'react';
+import React, { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle, memo } from 'react';
 import { AnchorBox } from '@/common/types'
 
 const randomColor = () => {
   return `hsl(${Math.random() * 360}, 70%, 50%)`;
 }
-
-
 
 const draw = (canvas: HTMLCanvasElement, boxes: AnchorBox[], activeIndex: number) => {
   if(!canvas) return
@@ -65,116 +63,49 @@ const pointCollidesBoxCorner = (point: Point, boxes: AnchorBox[]): number => {
   return -1;
 }
 
+export type BoxesLayerHandle = {
+  getBoxes: () => AnchorBox[],
+  setBoxes: (boxes: AnchorBox[]) => void
+}
+
 type BoxesLayerProps = {
-  // boxes: any[];
   width: number;
   height: number;
   className?: string;
   labeltext?: string;
 }
-const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className, labeltext}) => {
+const BoxesLayer = forwardRef(({
+  width,
+  height,
+  className,
+  labeltext
+}: BoxesLayerProps, ref) => {
+  const tgBoxIdx= useRef(-1);
+  const [cursor, setCursor] = useState('default')
+  const pointOffet = useRef<Point>({x: 0, y: 0})
+  const isDragging = useRef(false)
+  const isResizing = useRef(false)
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  // const [anchorBoxes, setAnchorBoxes] = useState<AnchorBox[]>([]);
   const boxesRef = useRef<AnchorBox[]>([]);
   const refresh = () => {
     draw(canvasRef.current!, boxesRef.current, tgBoxIdx.current)
   }
-  // const updateBoxState = useCallback(() => {
-  //   // setAnchorBoxes(boxesRef.current)
-  //   refresh()
-  // }, [])
-  const tgBoxIdx= useRef(-1);
+  
 
-  const keyDownHandler = useCallback((e: React.KeyboardEvent) => {
-    switch (e.key) {
-      case 'n':
-        tgBoxIdx.current = (tgBoxIdx.current - 1 + boxesRef.current.length) % boxesRef.current.length;
-        break;
-      case 'm':
-        tgBoxIdx.current = (tgBoxIdx.current + 1) % boxesRef.current.length;
-        break;
-      case '1':
-        boxesRef.current.push({sx: 0.3, sy: 0.3, w:0.2, h:0.3, label:'test', color: randomColor()})
-        tgBoxIdx.current = boxesRef.current.length -1
-        break;
-      default:
-        break;
+  useImperativeHandle(ref, () => ({
+    getBoxes: () => boxesRef.current,
+    setBoxes: (newBoxes: AnchorBox[]) => {
+      boxesRef.current = newBoxes;
+      refresh();
     }
-
-    if(tgBoxIdx.current<0) return // 以下的按键匹配动作需要有对应的框
-    const target = boxesRef.current[tgBoxIdx.current]
-    const step = 0.01;
-    switch (e.key) {
-      case 's':
-        target.sy += step; // Move down
-        boxesRef.current[tgBoxIdx.current] = target
-        break;
-      case 'a':
-        target.sx -= step; // Move left
-        boxesRef.current[tgBoxIdx.current] = target
-        break;
-      case 'w':
-        target.sy -= step; // Move up
-        boxesRef.current[tgBoxIdx.current] = target
-        break;
-      case 'd':
-        target.sx += step; // Move right
-        boxesRef.current[tgBoxIdx.current] = target
-        break;
-      case 'j':
-        target.sx = Math.min(1, target.sx + step/2);
-        target.w = Math.max(0, target.w - step); // Decrease width
-        boxesRef.current[tgBoxIdx.current] = target
-        break;
-      case 'l':
-        target.sx = Math.max(0, target.sx - step/2);
-        target.w = Math.min(1, target.w + step); // Increase width
-        boxesRef.current[tgBoxIdx.current] = target
-        break;
-      case 'k':
-        target.sy = Math.min(1, target.sy + step/2);
-        target.h = Math.max(0, target.h - step); // Decrease height
-        boxesRef.current[tgBoxIdx.current] = target
-        break;
-      case 'i':
-        target.sy = Math.max(0, target.sy - step/2);
-        target.h =  Math.min(1, target.h + step); // Increase height
-        boxesRef.current[tgBoxIdx.current] = target
-        break;
-      case 'Escape':
-        boxesRef.current.splice(tgBoxIdx.current, 1)
-        tgBoxIdx.current = -1
-        break;
-      default:
-        break; // Return previous state if no keys match
-    }
-
-    refresh()
-  }, [])
+  }));
 
   useEffect(() => {
     console.log('window update')
-    // if(boxesRef.current.length === 0) {
-    //   boxesRef.current.push({sx: 0.3, sy: 0.3, w:0.2, h:0.3, label:labeltext??'test', color: randomColor()})
-    //   tgBoxIdx.current = 0
-    // }
-    // refresh()
     setTimeout(()=> {
-      if(canvasRef.current) refresh() //draw(canvasRef.current, boxesRef.current, tgBoxIdx.current)
+      if(canvasRef.current) refresh()
     }, 500)  // 增加延时，等画布先加载
   }, [width]);
-
-  const drawCircle = (x:number, y:number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return
-    const context = canvas.getContext('2d');
-    if (!context) return
-
-    context.beginPath();
-    context.arc(x, y, 5, 0, Math.PI * 2, true);
-    context.fillStyle = 'cyan';
-    context.fill();
-  };
 
   const getRelPoint = (point: Point):Point => {
     if (!canvasRef.current) return point
@@ -184,10 +115,6 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className, labelt
     }
   }
 
-  const [cursor, setCursor] = useState('default')
-  const pointOffet = useRef<Point>({x: 0, y: 0})
-  const isDragging = useRef(false)
-  const isResizing = useRef(false)
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!canvasRef.current) return
     const rect = canvasRef.current.getBoundingClientRect();
@@ -200,7 +127,6 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className, labelt
       tgBoxIdx.current = cornerCollision
       refresh()
       isResizing.current = true
-      // console.log('cornerCollision', cornerCollision)
       return
     }
 
@@ -211,21 +137,16 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className, labelt
       boxesRef.current.splice(collision, 1)
       boxesRef.current.unshift(box)
 
-      // tgBoxIdx.current = collision
       tgBoxIdx.current = 0
       refresh()
-      // const box = boxesRef.current[tgBoxIdx.current]
       pointOffet.current = {
         x: point.x - box.sx, 
         y: point.y - box.sy
       }
-      // setIsDragging(true)
       isDragging.current = true
-      // setCursor('move')
     } else {
       boxesRef.current.push({sx: point.x, sy: point.y, w:0.01, h:0.02, label:labeltext?labeltext:'empty', color: randomColor()})
       tgBoxIdx.current = boxesRef.current.length -1
-      // setIsResizing(true)
       isResizing.current = true
       refresh()
     }
@@ -278,12 +199,10 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className, labelt
   }, []);
 
   useEffect(()=> {
-    // window.addEventListener('keydown', keyDownHandler)
     window.addEventListener('mouseup', handleMouseUp);
     window.addEventListener('mouseleave', handleMouseUp);
     window.addEventListener('mousemove', mouseMoveBox);
     return () => {
-      // window.removeEventListener('keydown', keyDownHandler)
       window.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('mouseleave', handleMouseUp);
       window.removeEventListener('mousemove', mouseMoveBox);
@@ -298,6 +217,6 @@ const BoxesLayer: React.FC<BoxesLayerProps> = ({width, height, className, labelt
       onMouseDown={handleMouseDown} 
     />
   )
-}
+})
 
 export default memo(BoxesLayer)

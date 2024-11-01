@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useParams} from 'next/navigation'
 
 type FileInfo = {
   name: string;
@@ -21,6 +22,7 @@ function formatBytes(bytes:number) {
 }
 
 export default function Home() {
+  const { path } = useParams()
   const [filesInfo, setFilesInfo] = useState<FileInfo[]>([]);
 
   const loadFiles = async (path: string) => {
@@ -39,9 +41,15 @@ export default function Home() {
   }
 
   useEffect(()=> {
-    loadFiles('/');
+    if(!path) {
+      loadFiles('/');
+    } else if(path.length > 0){
+      loadFiles('/'+(path as string[]).join('/'));
+    } else {
+      loadFiles('/'+path[0]);
+    }
   })
-  
+
   return (
     <div className="h-full w-full">
       { 

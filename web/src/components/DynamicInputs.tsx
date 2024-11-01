@@ -74,7 +74,7 @@ const DynamicInputs: React.FC<DynamicInputsProps> = ({onSelectText}) => {
 
   return (
     <div ref={containerRef}>
-      <div>当前标签：{inputs[activeIndex]}</div>
+      <div className='overflow-x-scroll text-nowrap no-scrollbar'>当前标签：{inputs[activeIndex]}</div>
       {inputs.map((input, index) => (
         <div 
           key={index}
@@ -94,7 +94,7 @@ const DynamicInputs: React.FC<DynamicInputsProps> = ({onSelectText}) => {
           />
         </div>
       ))}
-      <button className="bg-teal-600 px-2 rounded-md" onClick={addInput}>增加标签</button>
+      <button className="bg-teal-700 hover:bg-teal-600 px-2 py-1 rounded-r-md w-full" onClick={addInput}>增加标签</button>
     </div>
   );
 };
