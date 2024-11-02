@@ -142,6 +142,38 @@ app.get('/read_label/:video_name', (req, res) => {
   }
 });
 
+const time_diff_threshold = 0.005
+app.delete('/delete_label/:video_name/:time', (req, res) => {
+  const { video_name, time } = req.params;
+  const filePath = path.join(cacheDirectory, `${video_name}.json`);
+  
+  if (fs.existsSync(filePath)) {
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    const data = JSON.parse(fileContent);
+    const timeToDelete = parseFloat(time);
+
+    // 找出所有需要删除的时间点
+    const timesToDelete = Object.keys(data.labels).filter(labelTime => {
+      const diff = Math.abs(parseFloat(labelTime) - timeToDelete);
+      return diff < time_diff_threshold;
+    });
+
+    // 删除所有符合条件的标签
+    timesToDelete.forEach(t => {
+      delete data.labels[t];
+    });
+
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+    
+    res.status(200).send({ 
+      message: 'Labels deleted successfully', 
+      deletedCount: timesToDelete.length 
+    });
+  } else {
+    res.status(404).send({ message: 'Video data not found' });
+  }
+});
+
 // Start server
 const PORT = 8888;
 app.listen(PORT, () => {
