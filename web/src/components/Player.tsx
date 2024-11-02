@@ -83,11 +83,22 @@ export const Player = memo((props: {video_name: string}) => {
   const [isDragging, setIsDragging] = useState(false);
   const boxesLayerRef = useRef<BoxesLayerHandle>(null);
 
-  /** 视频原始比例，用于计算视频组件的宽高 */
-  const videoShape: Shape = {
-    w: windowHeight * 0.7 * videoPlayer.videoShapeRatio, 
-    h: windowHeight * 0.7
-  };
+  // 计算视频组件的尺寸
+  const calculateVideoSize = useCallback(() => {
+    const maxWidth = windowWidth * 0.7; // 视频最大宽度为窗口宽度的70%
+    const maxHeight = windowHeight * 0.7; // 视频最大高度为窗口高度的70%
+    
+    let videoWidth = maxWidth;
+    let videoHeight = videoWidth / videoPlayer.videoShapeRatio;
+
+    if (videoHeight > maxHeight) {
+      videoHeight = maxHeight;
+      videoWidth = videoHeight * videoPlayer.videoShapeRatio;
+    }
+
+    return { width: videoWidth, height: videoHeight };
+  }, [windowWidth, windowHeight, videoPlayer.videoShapeRatio]);
+  const videoSize = calculateVideoSize();
 
   const progressBarRef = useRef<HTMLDivElement>(null);
   const timerApplySeek = useRef<NodeJS.Timeout | null>(null);
@@ -148,7 +159,7 @@ export const Player = memo((props: {video_name: string}) => {
   return (
     <div className='flex flex-row pt-4'>
       <div className='flex flex-col w-[80%] h-full'>
-        <div className='mx-auto relative bg-gray-500 select-none' style={{width: px(videoShape.w), height: px(videoShape.h)}}>
+        <div className='mx-auto relative bg-gray-500 select-none' style={{width: px(videoSize.width), height: px(videoSize.height)}}>
           { hasWindow && // 避免在服务端渲染时触发错误。视频播放器仅支持客户端渲染。
             <ReactPlayer
               ref={videoPlayer.playerRef}
@@ -166,15 +177,15 @@ export const Player = memo((props: {video_name: string}) => {
           {/** 视频遮罩层，用来绘制目标框 */}
           <BoxesLayer 
             className='absolute top-0 left-0' 
-            width={videoShape.w} 
-            height={videoShape.h} 
+            width={videoSize.width} 
+            height={videoSize.height} 
             labeltext={labelText}
             ref={boxesLayerRef}
           />
         </div>
         <div 
           className='mx-auto mt-0 relative h-8 cursor-pointer' 
-          style={{width: px(videoShape.w)}}
+          style={{width: px(videoSize.width)}}
           onMouseDown={handleMouseDown}
         >
           {/** 时间轴 */}
@@ -187,7 +198,7 @@ export const Player = memo((props: {video_name: string}) => {
           <div className='absolute bg-slate-600 mt-4 h-4 w-full' ref={progressBarRef}></div>
           <div
             className='absolute bg-slate-400 mt-4 w-2 h-4 cursor-e-resize select-none' 
-            style={{left: px((isDragging || isSeeking? activeProgress: videoPlayer.progress)* videoShape.w)}}
+            style={{left: px((isDragging || isSeeking? activeProgress: videoPlayer.progress)* videoSize.width)}}
           ></div>
         </div>
 
@@ -208,7 +219,7 @@ export const Player = memo((props: {video_name: string}) => {
           </button>
         </div>
       </div>
-      <div className='flex flex-col w-48'>
+      <div className='flex flex-col h-full pr-12 '>
         {/** 提示文本 */}
         <DynamicInputs onSelectText={setLabelText}/>
       </div>

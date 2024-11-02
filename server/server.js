@@ -42,7 +42,7 @@ app.get('/file/*', (req, res) => {
     res.sendFile(filePath);
 });
 
-// Get video
+// 视频播放
 app.get('/video/*', (req, res) => {
     const filePath = path.join(baseDirectory, req.params[0]);
 
@@ -80,7 +80,7 @@ app.get('/video/*', (req, res) => {
     }
 });
 
-// List files detail
+// 列出文件
 app.get('/files-detail/*', (req, res) => {
     const dirPath = path.join(baseDirectory, req.params[0]);
 
@@ -103,15 +103,15 @@ app.get('/files-detail/*', (req, res) => {
     res.json(fileDetails);
 });
 
-// Save label endpoint
+// 保存标签
 app.post('/save_label', (req, res) => {
-  const { video_name, boxes } = req.body;
+  const { video_name, boxes, time } = req.body;
   const filePath = path.join(cacheDirectory, `${video_name}.json`);
 
   // Create a new label object with unique IDs
-  const newBoxes = boxes.map(box => ({ ...box, uid: uuidv4() }));
+  // const newBoxes = boxes.map(box => ({ ...box, uid: uuidv4() }));
 
-  let data = { metadata: {}, labels: [] };
+  let data = { metadata: {}, labels: {} };
 
   // Check if the file already exists
   if (fs.existsSync(filePath)) {
@@ -120,14 +120,14 @@ app.post('/save_label', (req, res) => {
   }
 
   // Add new boxes to labels
-  data.labels.push(...newBoxes);
+  data.labels[time] = boxes;
 
   // Write updated data back to the file
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
   res.status(200).send({ message: 'Labels saved successfully' });
 });
 
-// Read label endpoint
+// 读取标签
 app.get('/read_label/:video_name', (req, res) => {
   const { video_name } = req.params;
   const filePath = path.join(cacheDirectory, `${video_name}.json`);
