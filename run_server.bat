@@ -1,2 +1,1 @@
-cd server
-yarn run dev
+cd server && node server.js C:/projects/labelpig/videos

@@ -213,6 +213,7 @@ const BoxesLayer = forwardRef(({
 
     if (tgBoxIdx.current !== -1) {  // 框的尺寸过小则移除
       const box = boxesRef.current[tgBoxIdx.current]
+      if(!box) return;
       if(box.w < 0.02 && box.h < 0.04){
         boxesRef.current.splice(tgBoxIdx.current, 1)
         tgBoxIdx.current = -1

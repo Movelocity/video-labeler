@@ -170,7 +170,7 @@ app.delete('/delete_label/:video_name/:time', (req, res) => {
       deletedCount: timesToDelete.length 
     });
   } else {
-    res.status(404).send({ message: 'Video data not found' });
+    res.status(200).send({ message: 'Video data not found' });
   }
 });
 

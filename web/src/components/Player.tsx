@@ -176,7 +176,9 @@ export const Player = memo((props: {video_name: string}) => {
         })
         // console.log(reconstructedData)
         setLabelData(reconstructedData)
-      })
+      }).catch(error => {
+        console.error('read_label:', error);
+      });
       hasInit.current = true;
     }
   }, []);
@@ -213,6 +215,7 @@ export const Player = memo((props: {video_name: string}) => {
   
   const deleteCurrentLabeling = useCallback(() => {
     console.log('delete current labeling')
+    
     setLabelData(labelData.filter(item => Math.abs(item.time - activeProgress)>time_diff_threshold))
     fetch('http://localhost:8888/delete_label/'+props.video_name+"/"+activeProgress, {
       method: 'DELETE',
@@ -220,6 +223,7 @@ export const Player = memo((props: {video_name: string}) => {
         'Content-Type': 'application/json'
       }
     })
+    boxesLayerRef.current?.setBoxes([])
   }, [activeProgress, labelData])
 
   return (
