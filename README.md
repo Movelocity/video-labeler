@@ -3,11 +3,11 @@
 ![](./doc/main.jpg)
 
 ## 1. Instalation
-运行 `install.bat`
-
 如果没有安装 NodeJS 和 Yarn ，请先安装。
 - NodeJS: https://nodejs.org/en/download/prebuilt-installer
 - Yarn: `npm install -g yarn`
+
+运行 `install.bat`
 
 ## 2. Usage
 修改 `run_server.bat` 中的文件夹路径为你的视频文件夹路径。
