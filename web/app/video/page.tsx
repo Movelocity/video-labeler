@@ -1,10 +1,11 @@
 'use client'
 // import { useParams } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
-import { Player } from './Player'
+import Player from './Player'
 import { MainContextProvider } from '@/common/context'
+import { Suspense } from 'react'
 
-export default function VideoPage() {
+function Video() {
   const searchParams = useSearchParams()
   const filepath = searchParams.get('filepath')
 
@@ -15,4 +16,12 @@ export default function VideoPage() {
       </MainContextProvider>
     </div>
   );
+}
+
+export default function VideoPage() {
+  return (
+    <Suspense>
+      <Video/>
+    </Suspense>
+  )
 }

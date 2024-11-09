@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 // import { useParams} from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
 
@@ -22,7 +22,7 @@ function formatBytes(bytes:number) {
   return `${bytes.toFixed(2)} ${units[index]}`;
 }
 
-export default function ListFilesPage() {
+function ListFiles() {
   const searchParams = useSearchParams()
   const directory = searchParams.get('directory')??""
 
@@ -67,4 +67,12 @@ export default function ListFilesPage() {
       }
     </div>
   );
+}
+
+export default function ListFilesPage() {
+  return (
+    <Suspense>
+      <ListFiles/>
+    </Suspense>
+  )
 }

@@ -3,6 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import { VIDEO_ROOT } from '../config';
 
+export const runtime = "nodejs"
+
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams
   const filepath = searchParams.get('filepath')
@@ -48,4 +50,3 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export const runtime = "nodejs"

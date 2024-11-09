@@ -13,7 +13,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`antialiased`}>
+      <body className="antialiased w-full h-full bg-zinc-900">
         <div className="w-full h-8 bg-slate-700 flex flex-row px-4 pt-2 ">
           <a href="/">HOME</a>
         </div>

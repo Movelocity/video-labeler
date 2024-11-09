@@ -3,9 +3,11 @@ import fs from 'fs';
 import path from 'path';
 import { VIDEO_ROOT } from '../config';
 
+export const runtime = "nodejs";
+
 const TIME_DIFF_THRESHOLD = 0.005;
 
-export async function handle(req: NextRequest) {
+async function handle(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
   const action = searchParams.get('action') ?? "";
   console.log("标注动作: ", searchParams)
@@ -23,6 +25,9 @@ export async function handle(req: NextRequest) {
       return NextResponse.json({ msg: "Only support actions: 'read', 'write', 'delete'" }, { status: 404 });
   }
 }
+export const GET = handle;
+export const POST = handle;
+export const DELETE = handle;
 
 function handleRead(searchParams:URLSearchParams) {
   const videopath = searchParams.get('videopath') ?? "";
@@ -96,6 +101,3 @@ function handleDelete(searchParams: URLSearchParams) {
   }
 }
 
-export const GET = handle
-export const POST = handle
-export const DELETE = handle

@@ -14,6 +14,12 @@
 
 运行 `run_web.bat` 打开前端服务
 
+## 3. 编译打包 (可选)
+```shell
+yarn run build  # 打包的结果保存在 web/.next 中
+yarn run start  # 这样运行的服务进程，速度会快很多
+```
+
 ## 3. TODO
 - [x] 视频路径浏览
 - [x] 标注文件保存

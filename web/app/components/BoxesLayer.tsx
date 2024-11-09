@@ -19,13 +19,12 @@ const draw = (canvas: HTMLCanvasElement, boxes: AnchorBox[], activeIndex: number
     ctx.strokeRect(box.sx * w, box.sy * h, box.w * w, box.h * h)
 
     const textHeight = 16;
-    let textX, textY;
 
     // 在左上角绘制
     ctx.font = `${textHeight}px Arial`
     const textWidth = ctx.measureText(box.label).width
-    textX = box.sx * w
-    textY = box.sy * h
+    const textX = box.sx * w
+    const textY = box.sy * h
     ctx.fillStyle = box.color? box.color : randomColor();
     ctx.fillRect(textX-1, textY - textHeight, textWidth+8, textHeight)
 
@@ -74,6 +73,7 @@ type BoxesLayerProps = {
   className?: string;
   labeltext?: string;
 }
+
 const BoxesLayer = forwardRef(({
   width,
   height,
@@ -88,7 +88,7 @@ const BoxesLayer = forwardRef(({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const boxesRef = useRef<AnchorBox[]>([]);
   const boxStartRef = useRef<Point>({x: 0, y: 0})
-  const focus = useRef<Boolean>(false)
+  // const focus = useRef<boolean>(false)
   const refresh = () => {
     draw(canvasRef.current!, boxesRef.current, tgBoxIdx.current)
   }
@@ -161,7 +161,7 @@ const BoxesLayer = forwardRef(({
     }
   };
 
-  const mouseMoveBox = (e: React.MouseEvent<HTMLDivElement> | MouseEvent) => {
+  const mouseMoveBox = useCallback((e: React.MouseEvent<HTMLDivElement> | MouseEvent) => {
     if(!e.currentTarget) return
     if (!canvasRef.current) return
     const rect = canvasRef.current.getBoundingClientRect();
@@ -203,7 +203,7 @@ const BoxesLayer = forwardRef(({
       boxesRef.current[tgBoxIdx.current] = box
     }
     refresh()
-  }
+  }, [])
 
   const handleMouseUp = useCallback(() => {
     console.log('mouse up')
@@ -230,7 +230,7 @@ const BoxesLayer = forwardRef(({
         refresh()
       }
     }
-  }, [focus.current])
+  }, [])
 
   useEffect(()=> {
     window.addEventListener('mouseup', handleMouseUp);
@@ -241,7 +241,7 @@ const BoxesLayer = forwardRef(({
       window.removeEventListener('mouseleave', handleMouseUp);
       window.removeEventListener('mousemove', mouseMoveBox);
     }
-  }, [])
+  }, [handleMouseUp, mouseMoveBox])
 
   return (
     <canvas 
@@ -254,5 +254,5 @@ const BoxesLayer = forwardRef(({
     />
   )
 })
-
+BoxesLayer.displayName = 'BoxesLayerF';
 export default memo(BoxesLayer)

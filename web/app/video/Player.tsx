@@ -83,7 +83,7 @@ type LabelData = {
   time: number
 }
 
-export const Player = memo((props: {filepath: string}) => {
+const Player = (props: {filepath: string}) => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   // const videoPlayer = useVideoPlayer("http://localhost:8888/file/"+props.video_name);
   const videoPlayer = useVideoPlayer("/api/video?filepath="+props.filepath);
@@ -118,7 +118,7 @@ export const Player = memo((props: {filepath: string}) => {
   const updateProgressView = useCallback((fraction:number)=> {
     videoPlayer.seekTo(fraction);
     setActiveProgress(fraction);
-  }, [])
+  }, [videoPlayer])
 
   const updateProgress = useCallback((clientX:number)=> {
     if (!progressBarRef.current) return;
@@ -127,7 +127,7 @@ export const Player = memo((props: {filepath: string}) => {
     const width = rect.width;
     const fraction = Math.min(Math.max(x / width, 0), 1);
     updateProgressView(fraction);
-  }, [])
+  }, [updateProgressView])
 
   useEffect(() => {
     setActiveProgress(videoPlayer.progress);  // 0 ~ 1
@@ -182,7 +182,7 @@ export const Player = memo((props: {filepath: string}) => {
       });
       hasInit.current = true;
     }
-  }, []);
+  }, [props.filepath]);
 
   const saveCurrentLabeling = useCallback(() => {
     console.log('save current labeling')
@@ -212,7 +212,7 @@ export const Player = memo((props: {filepath: string}) => {
       },
       body: JSON.stringify(data)
     })
-  }, [activeProgress, boxesLayerRef.current?.getBoxes()])
+  }, [activeProgress, boxesLayerRef.current?.getBoxes(), props.filepath])
   
   const deleteCurrentLabeling = useCallback(() => {
     console.log('delete current labeling')
@@ -225,7 +225,7 @@ export const Player = memo((props: {filepath: string}) => {
       }
     })
     boxesLayerRef.current?.setBoxes([])
-  }, [activeProgress, labelData])
+  }, [activeProgress, labelData, props.filepath])
 
   return (
     <div className='flex flex-row pt-4'>
@@ -320,4 +320,6 @@ export const Player = memo((props: {filepath: string}) => {
       </div>
     </div>
   );
-})
+}
+Player.displayName = "Player"
+export default memo(Player)

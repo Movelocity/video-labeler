@@ -29,7 +29,7 @@ const DynamicInputs: React.FC<DynamicInputsProps> = ({onSelectText}) => {
 
   useEffect(()=> {
     setInputs(editLabels)
-  })
+  }, [setInputs, editLabels])
 
   const focusIndex = (idx:number) => {
     if(!containerRef.current) return;
