@@ -22,27 +22,6 @@ if %errorlevel% neq 0 (
 echo Node.js 和 Yarn 已正确安装!
 
 echo ======================================
-echo 正在检查服务器目录...
-if not exist "server" (
-    echo 未找到服务器目录!
-    pause
-    exit /b 1
-)
-
-echo ======================================
-echo 正在尝试安装服务器端 node_modules...
-cd server
-echo 当前目录: %CD%
-call yarn install
-if %errorlevel% neq 0 (
-    echo 安装服务器端依赖失败!
-    cd ..
-    pause
-    exit /b 1
-)
-cd ..
-
-echo ======================================
 echo 正在检查网页端目录...
 if not exist "web" (
     echo 未找到网页端目录!
@@ -64,5 +43,5 @@ if %errorlevel% neq 0 (
 cd ..
 
 echo ======================================
-echo 安装成功完成!
+echo 安装完成!
 pause
