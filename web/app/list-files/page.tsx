@@ -1,5 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
+// import { useParams} from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 
 type FileInfo = {
   name: string;
@@ -20,13 +22,16 @@ function formatBytes(bytes:number) {
   return `${bytes.toFixed(2)} ${units[index]}`;
 }
 
-export default function Home() {
+export default function ListFilesPage() {
+  const searchParams = useSearchParams()
+  const directory = searchParams.get('directory')??""
+
   const [filesInfo, setFilesInfo] = useState<FileInfo[]>([]);
 
   const loadFiles = async (path: string) => {
     if(filesInfo.length > 0) return;
     try {
-      const response = await fetch('http://localhost:8888/files-detail' + path);
+      const response = await fetch('/api/list-files?directory=' + encodeURI(path));
       if (!response.ok) {
         throw new Error('Failed to fetch files');
       }
@@ -39,18 +44,18 @@ export default function Home() {
   }
 
   useEffect(()=> {
-    loadFiles('/');
+    loadFiles(directory)
   })
-  
+
   return (
     <div className="h-full w-full">
       { 
         filesInfo.map((file, index) => {
           let target = ""
           if (file.type=="dir") {
-            target ="/ls/"+file.name
+            target ="/list-files?directory="+[directory,file.name].join("/")
           } else if (file.name.endsWith('.mp4')) {
-            target = "/video/"+file.name
+            target = "/video?filepath="+[directory,file.name].join("/")
           }
           return (
             <div key={index} className="h-10 w-full border-b border-gray-300 flex justify-between items-center px-4">

@@ -1,8 +1,8 @@
 'use client'
 import { useEffect, useState, useRef, useCallback, memo } from 'react';
 import ReactPlayer from 'react-player'
-import BoxesLayer, { type BoxesLayerHandle } from './BoxesLayer';
-import DynamicInputs from './DynamicInputs';
+import BoxesLayer, { type BoxesLayerHandle } from '@/components/BoxesLayer';
+import DynamicInputs from '@/components/DynamicInputs';
 import { AnchorBox } from '@/common/types';
 
 const time_diff_threshold = 0.005
@@ -83,9 +83,10 @@ type LabelData = {
   time: number
 }
 
-export const Player = memo((props: {video_name: string}) => {
+export const Player = memo((props: {filepath: string}) => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const videoPlayer = useVideoPlayer("http://localhost:8888/file/"+props.video_name);
+  // const videoPlayer = useVideoPlayer("http://localhost:8888/file/"+props.video_name);
+  const videoPlayer = useVideoPlayer("/api/video?filepath="+props.filepath);
   const [labelText, setLabelText] = useState('');
   const boxesLayerRef = useRef<BoxesLayerHandle>(null);
   /** 
@@ -160,7 +161,7 @@ export const Player = memo((props: {video_name: string}) => {
       console.log('init')
       setHasWindow(true);
       
-      fetch('http://localhost:8888/read_label/'+props.video_name, {
+      fetch('/api/labeling?action=read&videopath='+props.filepath, {
         method: 'GET'
       })
       .then(response => response.json())
@@ -189,7 +190,7 @@ export const Player = memo((props: {video_name: string}) => {
     if(boxes.length === 0) return;
     
     const data = {
-      video_name: props.video_name,
+      video_name: props.filepath,
       boxes: boxes.map(({ sx, sy, w, h, label }) => ({ sx, sy, w, h, label })),  // 只保留这几个属性
       time: activeProgress
     }
@@ -204,7 +205,7 @@ export const Player = memo((props: {video_name: string}) => {
         return [...prev, data]
       }
     })
-    fetch('http://localhost:8888/save_label', {
+    fetch("/api/labeling?action=write&videopath="+props.filepath, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -217,7 +218,7 @@ export const Player = memo((props: {video_name: string}) => {
     console.log('delete current labeling')
     
     setLabelData(labelData.filter(item => Math.abs(item.time - activeProgress)>time_diff_threshold))
-    fetch('http://localhost:8888/delete_label/'+props.video_name+"/"+activeProgress, {
+    fetch("/api/labeling?action=delete&videopath="+props.filepath+"&time="+activeProgress, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json'

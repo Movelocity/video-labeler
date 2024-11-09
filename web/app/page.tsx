@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useParams} from 'next/navigation'
 
 type FileInfo = {
   name: string;
@@ -22,13 +21,12 @@ function formatBytes(bytes:number) {
 }
 
 export default function Home() {
-  const { path } = useParams()
   const [filesInfo, setFilesInfo] = useState<FileInfo[]>([]);
 
   const loadFiles = async (path: string) => {
     if(filesInfo.length > 0) return;
     try {
-      const response = await fetch('http://localhost:8888/files-detail' + path);
+      const response = await fetch('/api/files-detail' + path);
       if (!response.ok) {
         throw new Error('Failed to fetch files');
       }
@@ -41,15 +39,9 @@ export default function Home() {
   }
 
   useEffect(()=> {
-    if(!path) {
-      loadFiles('/');
-    } else if(path.length > 0){
-      loadFiles('/'+(path as string[]).join('/'));
-    } else {
-      loadFiles('/'+path[0]);
-    }
+    loadFiles('/');
   })
-
+  
   return (
     <div className="h-full w-full">
       { 
