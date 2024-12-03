@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { type FileInfo } from '@/common/types'
 import { FaFolder, FaFile, FaFileVideo, FaSpinner } from 'react-icons/fa'
+import { isVideoFile } from '@/common/videos';
 
 function formatBytes(bytes:number) {
   if(!bytes) return '';
@@ -28,7 +29,8 @@ const TabLabel: React.FC<TabLabelProps> = ({text}) => {
 
 const FileIcon = ({ type, name }: { type: string; name: string }) => {
   if (type === "dir") return <FaFolder className="w-5 h-5 text-blue-500" />
-  if (name.endsWith('.mp4')) return <FaFileVideo className="w-5 h-5 text-purple-500" />
+  if(isVideoFile(name.toLocaleLowerCase()))
+    return <FaFileVideo className="w-5 h-5 text-purple-500" />
   return <FaFile className="w-5 h-5 text-gray-500" />
 }
 
@@ -99,7 +101,7 @@ function ListFiles() {
         let target = ""
         if (file.type === "dir") {
           target = "/list-files?directory=" + [directory, file.name].join("/")
-        } else if (file.name.endsWith('.mp4')) {
+        } else if (isVideoFile(file.name.toLocaleLowerCase())) {
           target = "/video?filepath=" + [directory, file.name].join("/") + "&label_file=" + file.label_file
         }
         

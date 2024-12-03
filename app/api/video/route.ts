@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   const stat = fs.statSync(absFilePath);
   const fileSize = stat.size;
   const range = req.headers.get('range');
-  const contentType = "video/mp4";
+  const contentType = "video/"+path.extname(filepath);
 
   if (range) {
     const parts = range.replace(/bytes=/, "").split("-");

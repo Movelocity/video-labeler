@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { getConfig } from '../config';
 export const runtime = "nodejs";
-
+import { supportedExtensions } from '@/common/videos';
 import { type FileInfo } from '@/common/types'
 
 // 获取配置
@@ -30,6 +30,8 @@ function createVideoLabelMap(videoRoot: string, labelsRoot: string) {
   };
 
   scanDirectory(videoRoot, '.mp4', videoPaths);
+  scanDirectory(videoRoot, '.MP4', videoPaths);
+  scanDirectory(videoRoot, '.mkv', videoPaths);
   // console.log("scanDirectory:", videoRoot, '.mp4', videoPaths)
   scanDirectory(labelsRoot, '.json', labelPaths);
   // console.log("scanDirectory:", labelsRoot, '.json', labelPaths)
@@ -73,10 +75,15 @@ function extractLabelsFromFile(labelFilePath: string): string[] {
   }
 }
 
+
+const isVideoFile = (filePath: string) => {
+  if (!supportedExtensions.includes(path.extname(filePath))) return false;
+}
+
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
   const directory = searchParams.get('directory') ?? "";
-  
+  console.log("list-files", directory)
   // 获取最新配置
   const { VIDEO_ROOT, LABELS_ROOT } = getConfig();
   const absDir = path.join(VIDEO_ROOT, directory);
@@ -93,7 +100,7 @@ export async function GET(req: NextRequest) {
     const itemFullPath = path.join(absDir, item);
     const isFile = fs.lstatSync(itemFullPath).isFile();
     const relativePath = path.relative(VIDEO_ROOT, itemFullPath);
-    const labelFileRelativePath = isFile && itemFullPath.endsWith('.mp4') ? videoLabelMap[relativePath] || '' : '';
+    const labelFileRelativePath = isFile && isVideoFile(itemFullPath) ? videoLabelMap[relativePath] || '' : '';
     const labelFileFullPath = labelFileRelativePath ? path.join(LABELS_ROOT, labelFileRelativePath) : '';
 
     // 提取标签列表

@@ -3,9 +3,10 @@ import { useRouter } from 'next/navigation';
 
 interface PathConfigProps {
   onSuccess?: () => void;
+  vidPathUpdater?: (newPath: string) => void;
 }
 
-export const PathConfig = ({ onSuccess }: PathConfigProps) => {
+export const PathConfig = ({ onSuccess, vidPathUpdater }: PathConfigProps) => {
   const [videoRoot, setVideoRoot] = useState('');
   const [labelsRoot, setLabelsRoot] = useState('');
   const [error, setError] = useState('');
@@ -51,6 +52,7 @@ export const PathConfig = ({ onSuccess }: PathConfigProps) => {
         setError(videoPathError);
         return;
       }
+      vidPathUpdater?.(videoRoot||'');
     }
     
     if (labelsRoot) {
