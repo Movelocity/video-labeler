@@ -7,7 +7,6 @@ type DynamicInputsProps = {
 }
 
 const DynamicInputs: React.FC<DynamicInputsProps> = ({onSelectText}) => {
-  // const [inputs, setInputs] = useState<string[]>(['']); // 初始状态只有一个空输入
   const mainStore = useMainStore();
   const editLabels = useStore(state => state.editLabels)
   const [inputs, setInputs] = useState<string[]>([''])
@@ -28,7 +27,7 @@ const DynamicInputs: React.FC<DynamicInputsProps> = ({onSelectText}) => {
   }, [inputs.length]);
 
   useEffect(()=> {
-    setInputs(editLabels)
+    setInputs(editLabels.length > 0 ? editLabels : ['default']);
   }, [setInputs, editLabels])
 
   const focusIndex = (idx:number) => {
@@ -54,10 +53,10 @@ const DynamicInputs: React.FC<DynamicInputsProps> = ({onSelectText}) => {
     onSelectText(value);
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
     if(!containerRef.current) return;
+    
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-
       e.preventDefault();
       setActiveIndex((prevIndex) => {
         let newIndex;
@@ -66,35 +65,59 @@ const DynamicInputs: React.FC<DynamicInputsProps> = ({onSelectText}) => {
         } else {
           newIndex = prevIndex < inputs.length - 1 ? prevIndex + 1 : 0;
         }
-        focusIndex(newIndex)  // 聚焦到新的活动输入框
+        focusIndex(newIndex)
         return newIndex;
       });
+    } else if (e.key === 'Enter' && index === inputs.length - 1) {
+      addInput();
     }
   };
 
   return (
-    <div ref={containerRef}>
-      <div className='overflow-x-scroll text-nowrap no-scrollbar'>当前标签：{inputs[activeIndex]}</div>
-      {inputs.map((input, index) => (
-        <div 
-          key={index}
-          className={cn('my-1 flex flex-row rounded-md bg-gray-700')}
-          onClick={() => changeActiveIndex(index)}
-        >
-          <div className={cn("w-4 min-w-4 cursor-pointer hover:bg-teal-700", activeIndex === index ? 'bg-teal-600': 'bg-gray-700')}></div>
-          <input
-            ref={(el) => {if(el){inputRefs.current[index] = el}}}
-            type="text"
-            placeholder='输入标签名字'
-            value={input}
-            onChange={(e) => handleInputChange(index, e.target.value)}
-            onKeyDown={handleKeyDown}
-            className='px-2 m-2 w-36 bg-gray-600 rounded-sm outline-none text-white'
-            spellCheck={false}
-          />
-        </div>
-      ))}
-      <button className="bg-teal-700 hover:bg-teal-600 px-2 py-1 rounded-r-md w-full" onClick={addInput}>增加标签</button>
+    <div 
+      ref={containerRef} 
+      className="p-4 bg-slate-800/80 rounded-lg shadow-lg border border-slate-700"
+    >
+      <div className="overflow-x-scroll text-nowrap no-scrollbar mb-3 text-slate-300 text-sm">
+        当前标签：<span className="font-medium text-emerald-400">{inputs[activeIndex] || 'default'}</span>
+      </div>
+      <div className="space-y-2">
+        {inputs.map((input, index) => (
+          <div 
+            key={index}
+            className={cn(
+              'group relative flex items-center rounded-md transition-all duration-200',
+              activeIndex === index ? 'bg-emerald-700/30 ring-1 ring-emerald-600' : 'bg-slate-700/50 hover:bg-slate-700'
+            )}
+            onClick={() => changeActiveIndex(index)}
+            role="button"
+            tabIndex={0}
+          >
+            <div className="w-1 h-full absolute left-0 rounded-l-md bg-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <input
+              ref={(el) => {if(el){inputRefs.current[index] = el}}}
+              type="text"
+              placeholder='输入标签名字'
+              value={input}
+              onChange={(e) => handleInputChange(index, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(e, index)}
+              className='px-3 py-2 w-full bg-transparent rounded-md outline-none text-white placeholder:text-slate-500
+                focus:ring-1 focus:ring-emerald-500 transition-all duration-200'
+              spellCheck={false}
+              aria-label={`标签 ${index + 1}`}
+            />
+          </div>
+        ))}
+      </div>
+      <button 
+        className="mt-4 w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-500 
+          text-white rounded-md transition-colors duration-200 
+          focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        onClick={addInput}
+        aria-label="增加新标签"
+      >
+        增加标签
+      </button>
     </div>
   );
 };

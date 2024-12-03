@@ -1,1 +1,1 @@
-cd web && npm run dev
+yarn run start

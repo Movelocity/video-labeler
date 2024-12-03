@@ -8,11 +8,12 @@ import { Suspense } from 'react'
 function Video() {
   const searchParams = useSearchParams()
   const filepath = searchParams.get('filepath')
+  const label_file = searchParams.get('label_file')
 
   return (
     <div className="w-full">
       <MainContextProvider>
-        <Player filepath={filepath as string}/>
+        <Player filepath={filepath as string} label_file={label_file as string}/>
       </MainContextProvider>
     </div>
   );

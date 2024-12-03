@@ -4,7 +4,7 @@ const nextConfig = {
     return [
       {
         source: '/',
-        destination: '/list-files',
+        destination: '/config',
         permanent: true, // Use `true` for a 308 permanent redirect, or `false` for a 307 temporary redirect
       },
     ];

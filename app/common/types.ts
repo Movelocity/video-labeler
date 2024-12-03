@@ -8,3 +8,12 @@ export type AnchorBox = {
   label: string
   color?: string
 }
+
+export type FileInfo = {
+  name: string
+  label_file: string
+  labels: string[]
+  size: number | null
+  modified_time: string | null
+  type: string
+}

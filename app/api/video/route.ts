@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { VIDEO_ROOT } from '../config';
+import { getConfig } from '../config';
 
 export const runtime = "nodejs"
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams
   const filepath = searchParams.get('filepath')
+  // const label_file = searchParams.get('label_file')
   if(!filepath || typeof filepath != typeof "") {
     return NextResponse.json({msg: "请输入有效的 searchParam"}, {status: 404})
   }
+  const { VIDEO_ROOT } = getConfig();
   const absFilePath = path.join(VIDEO_ROOT, filepath as string)
   console.log(absFilePath)
   // const filePath = "G:/pico_vid/survival/camp.mp4";

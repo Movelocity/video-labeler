@@ -4,6 +4,8 @@ import ReactPlayer from 'react-player'
 import BoxesLayer, { type BoxesLayerHandle } from '@/components/BoxesLayer';
 import DynamicInputs from '@/components/DynamicInputs';
 import { AnchorBox } from '@/common/types';
+import { FaPlay, FaPause, FaStepForward, FaStepBackward, FaSave, FaTrash } from 'react-icons/fa';
+import { MdSpeed } from 'react-icons/md';
 
 const time_diff_threshold = 0.005
 const px = (n: number) => `${n}px`
@@ -40,6 +42,7 @@ const useVideoPlayer = (url: string) => {
   const [duration, setDuration] = useState(0);
   const [videoShapeRatio, setVideoShapeRatio] = useState(16/9);
   const playerRef = useRef<ReactPlayer>(null);
+  const [playbackRate, setPlaybackRate] = useState(1);
 
   const handleProgress = useCallback((state: { played: number }) => {
     setProgress(state.played);
@@ -59,6 +62,20 @@ const useVideoPlayer = (url: string) => {
     playerRef.current?.seekTo(fraction, 'fraction');
   }, []);
 
+  const stepForward = useCallback(() => {
+    const player = playerRef.current?.getInternalPlayer() as HTMLVideoElement;
+    if (player) {
+      player.currentTime += 1/30; // Assuming 30fps
+    }
+  }, []);
+
+  const stepBackward = useCallback(() => {
+    const player = playerRef.current?.getInternalPlayer() as HTMLVideoElement;
+    if (player) {
+      player.currentTime -= 1/30;
+    }
+  }, []);
+
   return {
     playerRef,
     playing,
@@ -69,7 +86,11 @@ const useVideoPlayer = (url: string) => {
     handleReady,
     togglePlay,
     seekTo,
-    url
+    url,
+    playbackRate,
+    setPlaybackRate,
+    stepForward,
+    stepBackward,
   };
 };
 
@@ -83,10 +104,56 @@ type LabelData = {
   time: number
 }
 
-const Player = (props: {filepath: string}) => {
+// Add this helper function near the top
+const formatTooltipTime = (duration: number, fraction: number) => {
+  const currentTime = duration * fraction;
+  return second2time(currentTime);
+}
+
+// Add keyboard shortcuts handler
+const useKeyboardShortcuts = (controls: {
+  togglePlay: () => void;
+  stepForward: () => void;
+  stepBackward: () => void;
+  saveCurrentLabeling: () => void;
+  deleteCurrentLabeling: () => void;
+}) => {
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement) return;
+      
+      switch (e.key.toLowerCase()) {
+        case ' ': 
+          e.preventDefault();
+          controls.togglePlay();
+          break;
+        case 'arrowright':
+          if (e.shiftKey) controls.stepForward();
+          break;
+        case 'arrowleft':
+          if (e.shiftKey) controls.stepBackward();
+          break;
+        case 's':
+          if (e.ctrlKey) {
+            e.preventDefault();
+            controls.saveCurrentLabeling();
+          }
+          break;
+        case 'delete':
+          controls.deleteCurrentLabeling();
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [controls]);
+};
+
+const Player = (props: {filepath: string, label_file: string}) => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   // const videoPlayer = useVideoPlayer("http://localhost:8888/file/"+props.video_name);
-  const videoPlayer = useVideoPlayer("/api/video?filepath="+props.filepath);
+  const videoPlayer = useVideoPlayer("/api/video?filepath="+props.filepath+"&label_file="+props.label_file);
   const [labelText, setLabelText] = useState('');
   const boxesLayerRef = useRef<BoxesLayerHandle>(null);
   /** 
@@ -132,26 +199,7 @@ const Player = (props: {filepath: string}) => {
   useEffect(() => {
     setActiveProgress(videoPlayer.progress);  // 0 ~ 1
   }, [videoPlayer.progress]);
-  // 上面的隔 1s 才触发一次，下面的尝试用 setInterval 每 0.1s 触发一次。但依赖的 videoPlayer.progress 还是 1s 才更新一次
-  // const pgrIntervalRef = useRef<NodeJS.Timeout|null>(null);
-  // useEffect(() => {
-  //   if(!videoPlayer.playing) return
-  //   if(pgrIntervalRef.current) clearInterval(pgrIntervalRef.current);
-  //   pgrIntervalRef.current = setInterval(() => {
-  //     setActiveProgress(videoPlayer.progress);
-  //     console.log(videoPlayer.progress)
-  //   }, 100);
-  //   console.log(pgrIntervalRef.current)
-  //   return () => {
-  //     clearInterval(pgrIntervalRef.current as NodeJS.Timeout);
-  //   };
-  // }, [videoPlayer.progress, videoPlayer.playing]);
 
-  /**鼠标事件跟踪*/
-  // const mouseSeekProgress = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-  //   console.log('mouse down')
-  //   updateProgressView(e.clientX);
-  // }, []);
 
   const [hasWindow, setHasWindow] = useState(false);
   const hasInit = useRef(false);
@@ -161,7 +209,7 @@ const Player = (props: {filepath: string}) => {
       console.log('init')
       setHasWindow(true);
       
-      fetch('/api/labeling?action=read&videopath='+props.filepath, {
+      fetch('/api/labeling?action=read&videopath='+props.filepath+"&label_file="+props.label_file, {
         method: 'GET'
       })
       .then(response => response.json())
@@ -182,7 +230,7 @@ const Player = (props: {filepath: string}) => {
       });
       hasInit.current = true;
     }
-  }, [props.filepath]);
+  }, [props.filepath, props.label_file]);
 
   const saveCurrentLabeling = useCallback(() => {
     console.log('save current labeling')
@@ -205,27 +253,36 @@ const Player = (props: {filepath: string}) => {
         return [...prev, data]
       }
     })
-    fetch("/api/labeling?action=write&videopath="+props.filepath, {
+    fetch("/api/labeling?action=write&videopath="+props.filepath+"&label_file="+props.label_file, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(data)
     })
-  }, [activeProgress, boxesLayerRef.current?.getBoxes(), props.filepath])
+  }, [activeProgress, boxesLayerRef.current?.getBoxes(), props.filepath, props.label_file])
   
   const deleteCurrentLabeling = useCallback(() => {
     console.log('delete current labeling')
     
     setLabelData(labelData.filter(item => Math.abs(item.time - activeProgress)>time_diff_threshold))
-    fetch("/api/labeling?action=delete&videopath="+props.filepath+"&time="+activeProgress, {
+    fetch("/api/labeling?action=delete&videopath="+props.filepath+"&time="+activeProgress+"&label_file="+props.label_file, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json'
       }
     })
     boxesLayerRef.current?.setBoxes([])
-  }, [activeProgress, labelData, props.filepath])
+  }, [activeProgress, labelData, props.filepath, props.label_file])
+
+  // Add keyboard shortcuts
+  useKeyboardShortcuts({
+    togglePlay: videoPlayer.togglePlay,
+    stepForward: videoPlayer.stepForward,
+    stepBackward: videoPlayer.stepBackward,
+    saveCurrentLabeling,
+    deleteCurrentLabeling,
+  });
 
   return (
     <div className='flex flex-row pt-4'>
@@ -256,62 +313,142 @@ const Player = (props: {filepath: string}) => {
         </div>
 
         <div className='' style={{width: px(videoSize.width)}}>
-          <div className='text-slate-300 text-xs w-full flex flex-row justify-between'>
+          {/* Timeline timestamps */}
+          <div className='text-slate-300 text-xs w-full flex flex-row justify-between mb-1'>
             <span>00:00</span>
             <span>{second2time(videoPlayer.duration*0.25)}</span>
             <span>{second2time(videoPlayer.duration*0.75)}</span>
             <span>{second2time(videoPlayer.duration)}</span>
           </div>
-          {/** 时间标记 */}
-          <div className='relative h-6 w-full'>
+
+          {/* Time markers container */}
+          <div className='relative h-8 w-full group'>
             {labelData.map(({time, boxes}) => (
               <div 
-                key={time} 
-                className='text-slate-300 text-xs absolute bg-green-600 hover:bg-green-500 h-6 w-2 cursor-pointer'
-                onClick={()=>{
-                  boxesLayerRef.current?.setBoxes(boxes as AnchorBox[])
-                  updateProgressView(time)
-                }}
-                style={{left: px(time* videoSize.width)}}
+                key={time}
+                className='absolute -translate-x-1/2 group/marker'
+                style={{left: `${time * 100}%`}}
               >
+                <div 
+                  className='w-1 h-6 bg-green-600 hover:bg-green-500 cursor-pointer 
+                             transition-all duration-200 group-hover/marker:h-8'
+                  onClick={() => {
+                    boxesLayerRef.current?.setBoxes(boxes as AnchorBox[])
+                    updateProgressView(time)
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Jump to ${formatTooltipTime(videoPlayer.duration, time)}`}
+                  onKeyDown={(e) => e.key === 'Enter' && updateProgressView(time)}
+                />
+                {/* Tooltip */}
+                <div className='absolute bottom-full left-1/2 -translate-x-1/2 mb-1 
+                              opacity-0 group-hover/marker:opacity-100 transition-opacity
+                              bg-black/80 text-white text-xs rounded px-2 py-1 whitespace-nowrap'>
+                  {formatTooltipTime(videoPlayer.duration, time)}
+                </div>
               </div>
             ))}
           </div>
-          {/** 时间轴控制 */}
+
+          {/* Timeline control */}
           <div
-            className='cursor-pointer relative h-4 w-full'
+            className='relative h-4 w-full rounded-full overflow-hidden'
             onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => {updateProgress(e.clientX)}}
+            role="slider"
+            aria-label="Video progress"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(activeProgress * 100)}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowRight') updateProgressView(Math.min(1, activeProgress + 0.01));
+              if (e.key === 'ArrowLeft') updateProgressView(Math.max(0, activeProgress - 0.01));
+            }}
           >
-            <div className='absolute bg-slate-600 h-4 w-full' ref={progressBarRef}></div>
+            {/* Progress bar background */}
+            <div className='absolute inset-0 bg-slate-700' ref={progressBarRef} />
+            {/* Progress bar filled */}
+            <div 
+              className='absolute inset-y-0 left-0 bg-slate-400 transition-all duration-100'
+              style={{width: `${activeProgress * 100}%`}}
+            />
+            {/* Progress handle */}
             <div
-              className='absolute bg-slate-400 w-2 h-4 select-none' 
-              style={{left: px(activeProgress* videoSize.width)}}
-            ></div>
+              className='absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full 
+                         shadow-lg transition-transform duration-100 hover:scale-125'
+              style={{left: `${activeProgress * 100}%`, transform: `translateX(-50%) translateY(-50%)`}}
+            />
           </div>
         </div>
             
         {/** 按钮组 */}
-        <div className='flex flex-row p-3 mx-auto'>
-          {/** 播放控制按钮 */}
-          <button 
-            className='cursor-pointer bg-green-600 hover:bg-green-500 rounded-md px-2'
-            onClick={videoPlayer.togglePlay}
-          >
-            {videoPlayer.playing ? 'Pause' : 'Play'}
-          </button>
-          {/** 保存按钮 */}
-          <button 
-            className='cursor-pointer bg-zinc-600 hover:bg-zinc-500 rounded-md px-2 ml-2'
-            onClick={saveCurrentLabeling}
-          >
-            保存当前帧标记
-          </button>
-          <button
-            className='cursor-pointer bg-zinc-600 hover:bg-zinc-500 rounded-md px-2 ml-2'
-            onClick={deleteCurrentLabeling}
-          >
-            删除当前帧标记
-          </button>
+        <div className='flex flex-row p-3 mx-auto items-center space-x-3'>
+          <div className='flex items-center space-x-2'>
+            {/* <button 
+              className='p-2 rounded-full bg-zinc-700 hover:bg-zinc-600 transition-colors'
+              onClick={videoPlayer.stepBackward}
+              title="Previous frame (Shift + ←)"
+            >
+              <FaStepBackward className="w-4 h-4" />
+            </button> */}
+            
+            <button 
+              className='p-3 rounded-full bg-green-600 hover:bg-green-500 transition-colors'
+              onClick={videoPlayer.togglePlay}
+              title="Play/Pause (Space)"
+            >
+              {videoPlayer.playing ? 
+                <FaPause className="w-5 h-5" /> : 
+                <FaPlay className="w-5 h-5" />
+              }
+            </button>
+
+            {/* <button 
+              className='p-2 rounded-full bg-zinc-700 hover:bg-zinc-600 transition-colors'
+              onClick={videoPlayer.stepForward}
+              title="Next frame (Shift + →)"
+            >
+              <FaStepForward className="w-4 h-4" />
+            </button> */}
+          </div>
+
+          <div className='text-sm text-slate-300 min-w-[80px]'>
+            {second2time(videoPlayer.duration * activeProgress)} / {second2time(videoPlayer.duration)}
+          </div>
+
+          {/* <div className='flex items-center space-x-2'>
+            <select
+              className='bg-zinc-700 rounded px-2 py-1 text-sm'
+              value={videoPlayer.playbackRate}
+              onChange={(e) => videoPlayer.setPlaybackRate(Number(e.target.value))}
+            >
+              {[0.25, 0.5, 0.75, 1, 1.25, 1.5, 2].map(rate => (
+                <option key={rate} value={rate}>{rate}x</option>
+              ))}
+            </select>
+            <MdSpeed className="w-4 h-4 text-slate-400" />
+          </div> */}
+
+          <div className='flex items-center space-x-2'>
+            <button 
+              className='flex items-center space-x-1 px-3 py-1.5 bg-zinc-600 hover:bg-zinc-500 rounded-md transition-colors'
+              onClick={saveCurrentLabeling}
+              title="Save current frame (Ctrl + S)"
+            >
+              <FaSave className="w-4 h-4" />
+              <span>Save Frame</span>
+            </button>
+
+            <button
+              className='flex items-center space-x-1 px-3 py-1.5 bg-zinc-600 hover:bg-zinc-500 rounded-md transition-colors'
+              onClick={deleteCurrentLabeling}
+              title="Delete current frame (Delete)"
+            >
+              <FaTrash className="w-4 h-4" />
+              <span>Delete Frame</span>
+            </button>
+          </div>
         </div>
       </div>
       <div className='flex flex-col h-full pr-12 '>
