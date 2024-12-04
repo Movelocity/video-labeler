@@ -17,3 +17,13 @@ export type FileInfo = {
   modified_time: string | null
   type: string
 }
+
+export type Shape = {
+  w: number
+  h: number
+}
+
+export type LabelData = {
+  boxes: Array<AnchorBox>
+  time: number
+}

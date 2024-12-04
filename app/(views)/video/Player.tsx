@@ -5,6 +5,13 @@ import BoxesLayer, { type BoxesLayerHandle } from '@/components/BoxesLayer';
 import DynamicInputs from '@/components/DynamicInputs';
 import { AnchorBox } from '@/common/types';
 import { FaPlay, FaPause, FaSave, FaTrash } from 'react-icons/fa';
+import { useWindowDimensions } from '@/components/videoPlayer/hooks/useWindowDimensions';
+import { useVideoPlayer } from '@/components/videoPlayer/hooks/useVideoPlayer';
+import { useKeyboardShortcuts } from '@/components/videoPlayer/hooks/useKeyboardShortcuts';
+import { TimelineMarkers } from '@/components/videoPlayer/_partial/TimelineMarkers';
+import { VideoControls } from '@/components/videoPlayer/_partial/VideoControls';
+import { LabelData, Shape } from '@/common/types';
+
 
 const time_diff_threshold = 0.005
 const px = (n: number) => `${n}px`
@@ -14,140 +21,11 @@ const second2time = (s: number) => {
   return `${m}:${s2.toString().padStart(2, '0')}`
 }
 
-// Custom hook for window dimensions
-const useWindowDimensions = () => {
-  const [windowDimensions, setWindowDimensions] = useState({ width: 720, height: 720 });
-
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight
-      });
-    };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  return windowDimensions;
-};
-
-// Custom hook for video player
-const useVideoPlayer = (url: string) => {
-  const [playing, setPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [videoShapeRatio, setVideoShapeRatio] = useState(16/9);
-  const playerRef = useRef<ReactPlayer>(null);
-  const [playbackRate, setPlaybackRate] = useState(1);
-
-  const handleProgress = useCallback((state: { played: number }) => {
-    setProgress(state.played);
-  }, []);
-
-  const handleReady = useCallback((player: ReactPlayer) => {
-    setDuration(player.getDuration());
-    const videoElement = player.getInternalPlayer() as HTMLVideoElement;
-    setVideoShapeRatio(videoElement.videoWidth / videoElement.videoHeight);
-  }, []);
-
-  const togglePlay = useCallback(() => {
-    setPlaying(prev => !prev);
-  }, []);
-
-  const seekTo = useCallback((fraction: number) => {
-    playerRef.current?.seekTo(fraction, 'fraction');
-  }, []);
-
-  const stepForward = useCallback(() => {
-    const player = playerRef.current?.getInternalPlayer() as HTMLVideoElement;
-    if (player) {
-      player.currentTime += 1/30; // Assuming 30fps
-    }
-  }, []);
-
-  const stepBackward = useCallback(() => {
-    const player = playerRef.current?.getInternalPlayer() as HTMLVideoElement;
-    if (player) {
-      player.currentTime -= 1/30;
-    }
-  }, []);
-
-  return {
-    playerRef,
-    playing,
-    progress,
-    duration,
-    videoShapeRatio,
-    handleProgress,
-    handleReady,
-    togglePlay,
-    seekTo,
-    url,
-    playbackRate,
-    setPlaybackRate,
-    stepForward,
-    stepBackward,
-  };
-};
-
-type Shape = {
-  w: number
-  h: number
-}
-
-type LabelData = {
-  boxes: Array<Shape>
-  time: number
-}
-
 // Add this helper function near the top
 const formatTooltipTime = (duration: number, fraction: number) => {
   const currentTime = duration * fraction;
   return second2time(currentTime);
 }
-
-// Add keyboard shortcuts handler
-const useKeyboardShortcuts = (controls: {
-  togglePlay: () => void;
-  stepForward: () => void;
-  stepBackward: () => void;
-  saveCurrentLabeling: () => void;
-  deleteCurrentLabeling: () => void;
-}) => {
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement) return;
-      
-      switch (e.key.toLowerCase()) {
-        case ' ': 
-          e.preventDefault();
-          controls.togglePlay();
-          break;
-        case 'arrowright':
-          if (e.shiftKey) controls.stepForward();
-          break;
-        case 'arrowleft':
-          if (e.shiftKey) controls.stepBackward();
-          break;
-        case 's':
-          if (e.ctrlKey) {
-            e.preventDefault();
-            controls.saveCurrentLabeling();
-          }
-          break;
-        case 'delete':
-          controls.deleteCurrentLabeling();
-          break;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [controls]);
-};
 
 const Player = (props: {filepath: string, label_file: string}) => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
@@ -319,35 +197,14 @@ const Player = (props: {filepath: string, label_file: string}) => {
             <span>{second2time(videoPlayer.duration)}</span>
           </div>
 
-          {/* Time markers container */}
-          <div className='relative h-8 w-full group'>
-            {labelData.map(({time, boxes}) => (
-              <div 
-                key={time}
-                className='absolute -translate-x-1/2 group/marker'
-                style={{left: `${time * 100}%`}}
-              >
-                <div 
-                  className='w-1 h-6 bg-green-600 hover:bg-green-500 cursor-pointer 
-                             transition-all duration-200 group-hover/marker:h-8'
-                  onClick={() => {
-                    boxesLayerRef.current?.setBoxes(boxes as AnchorBox[])
-                    updateProgressView(time)
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Jump to ${formatTooltipTime(videoPlayer.duration, time)}`}
-                  onKeyDown={(e) => e.key === 'Enter' && updateProgressView(time)}
-                />
-                {/* Tooltip */}
-                <div className='absolute bottom-full left-1/2 -translate-x-1/2 mb-1 
-                              opacity-0 group-hover/marker:opacity-100 transition-opacity
-                              bg-black/80 text-white text-xs rounded px-2 py-1 whitespace-nowrap'>
-                  {formatTooltipTime(videoPlayer.duration, time)}
-                </div>
-              </div>
-            ))}
-          </div>
+          <TimelineMarkers 
+            labelData={labelData}
+            duration={videoPlayer.duration}
+            onMarkerClick={(time, boxes) => {
+              boxesLayerRef.current?.setBoxes(boxes)
+              updateProgressView(time)
+            }}
+          />
 
           {/* Timeline control */}
           <div
@@ -381,53 +238,14 @@ const Player = (props: {filepath: string, label_file: string}) => {
         </div>
             
         {/** 按钮组 */}
-        <div className='flex flex-row p-3 mx-auto items-center space-x-3'>
-          <div className='flex items-center space-x-2'>
-            {/* <button 
-              className='p-2 rounded-full bg-zinc-700 hover:bg-zinc-600 transition-colors'
-              onClick={videoPlayer.stepBackward}
-              title="Previous frame (Shift + ←)"
-            >
-              <FaStepBackward className="w-4 h-4" />
-            </button> */}
-            
-            <button 
-              className='p-3 rounded-full bg-green-600 hover:bg-green-500 transition-colors'
-              onClick={videoPlayer.togglePlay}
-              title="播放/暂停 (空格切换)"
-            >
-              {videoPlayer.playing ? 
-                <FaPause className="w-5 h-5" /> : 
-                <FaPlay className="w-5 h-5" />
-              }
-            </button>
-          </div>
-
-          <div className='text-sm text-slate-300 min-w-[80px]'>
-            {second2time(videoPlayer.duration * activeProgress)} / {second2time(videoPlayer.duration)}
-          </div>
-
-
-          <div className='flex items-center space-x-2'>
-            <button 
-              className='flex items-center space-x-1 px-3 py-1.5 bg-zinc-600 hover:bg-zinc-500 rounded-md transition-colors'
-              onClick={saveCurrentLabeling}
-              title="保存当前帧的标注 (Ctrl + S)"
-            >
-              <FaSave className="w-4 h-4" />
-              <span>Save Frame</span>
-            </button>
-
-            <button
-              className='flex items-center space-x-1 px-3 py-1.5 bg-zinc-600 hover:bg-zinc-500 rounded-md transition-colors'
-              onClick={deleteCurrentLabeling}
-              title="删除当前帧的标注"
-            >
-              <FaTrash className="w-4 h-4" />
-              <span>Delete Frame</span>
-            </button>
-          </div>
-        </div>
+        <VideoControls 
+          playing={videoPlayer.playing}
+          duration={videoPlayer.duration}
+          currentTime={videoPlayer.duration * activeProgress}
+          onTogglePlay={videoPlayer.togglePlay}
+          onSave={saveCurrentLabeling}
+          onDelete={deleteCurrentLabeling}
+        />
       </div>
       <div className='flex flex-col h-full pr-12 '>
         {/** 提示文本 */}
