@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { type FileInfo } from '@/common/types'
 import { FaFolder, FaFile, FaFileVideo, FaSpinner } from 'react-icons/fa'
 import { isVideoFile } from '@/common/videos';
-
+import cn from 'classnames';
 function formatBytes(bytes:number) {
   if(!bytes) return '';
   if (bytes < 0) return ''+bytes;
@@ -19,20 +19,75 @@ function formatBytes(bytes:number) {
 }
 
 type TabLabelProps = {text: string}
+/**
+ * TabLabel component displays a colored label based on the text content
+ * - Empty text: Not displayed
+ * - Contains "开始": Blue background
+ * - Contains "结束": Red background  
+ * - Contains "#": Green background
+ * - Otherwise: Gray background
+ */
 const TabLabel: React.FC<TabLabelProps> = ({text}) => {
+  if (!text) return null;
+
+  const isStart = text.includes("开始");
+  const isEnd = text.includes("结束"); 
+  const isHash = text.includes("#");
+  const color = isHash ? "bg-green-600/90" : isStart ? "bg-cyan-600/90" : isEnd ? "bg-orange-600/90" : "bg-gray-600/90";
+
   return (
-    <div className="rounded-md text-center bg-green-600/90 px-2 py-1 text-xs text-white font-medium">
+    <div className={cn("rounded-sm text-center px-1 text-xs text-white font-medium", color)}>
       {text}
     </div>
-  )
+  );
 }
 
 const FileIcon = ({ type, name }: { type: string; name: string }) => {
-  if (type === "dir") return <FaFolder className="w-5 h-5 text-blue-500" />
+  if (type === "dir") return <FaFolder className="w-6 h-6 text-blue-500" />
   if(isVideoFile(name.toLocaleLowerCase()))
-    return <FaFileVideo className="w-5 h-5 text-purple-500" />
-  return <FaFile className="w-5 h-5 text-gray-500" />
+    return <FaFileVideo className="w-6 h-6 text-purple-500" />
+  return <FaFile className="w-6 h-6 text-gray-500" />
 }
+
+const FileItem = ({ file, directory }: { directory: string, file: FileInfo }) => {
+  const [target, setTarget] = useState("")
+  console.log("file", file)
+  useEffect(() => {
+    if (file.type === "dir") {
+      setTarget("/list-files?directory=" + [directory, file.name].join("/"))
+    } else if (isVideoFile(file.name.toLocaleLowerCase())) {
+      setTarget("/video?filepath=" + [directory, file.name].join("/") + "&label_file=" + file.label_file)
+    }
+  }, [file.type, file.name, directory, file.label_file])
+        
+  return (
+    <a
+      href={target}
+      className="group h-16 cursor-pointer w-full border-b border-gray-700 flex justify-between items-center px-4 hover:bg-gray-800 transition-colors"
+      aria-label={`Open ${file.name}`}
+      role="link"
+    >
+      <span className="flex flex-row items-center space-x-3 w-[calc(100%-100px)] truncate">
+        <FileIcon type={file.type} name={file.name} />
+        <span 
+          className="hover:text-blue-500 hover:underline transition-colors"
+        >
+          {file.name}
+        </span>
+        <div className="flex gap-1 overflow-x-hidden">
+          {file.labels?.map((label, index) => (
+            <TabLabel key={index} text={label} />
+          ))}
+        </div>
+      </span>
+      {file.size && (
+        <div className="text-gray-200 text-sm group-hover:text-gray-300">
+          {formatBytes(file.size)}
+        </div>
+      )}
+    </a>
+  )
+} 
 
 function ListFiles() {
   const searchParams = useSearchParams()
@@ -93,48 +148,11 @@ function ListFiles() {
   return (
     <div className="h-full w-full">
       {/* Path breadcrumb */}
-      <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-200">
+      <div className="px-4 py-2 text-sm text-gray-200 border-b border-gray-500">
         Path: {directory || 'Root'}
       </div>
       
-      {filesInfo.map((file, index) => {
-        let target = ""
-        if (file.type === "dir") {
-          target = "/list-files?directory=" + [directory, file.name].join("/")
-        } else if (isVideoFile(file.name.toLocaleLowerCase())) {
-          target = "/video?filepath=" + [directory, file.name].join("/") + "&label_file=" + file.label_file
-        }
-        
-        return (
-          <div 
-            key={index} 
-            className="group h-12 w-full border-b border-gray-200 flex justify-between items-center px-4 hover:bg-gray-700 transition-colors"
-          >
-            <span className="flex flex-row items-center space-x-3">
-              <FileIcon type={file.type} name={file.name} />
-              <a 
-                href={target}
-                className="hover:text-blue-600 hover:underline transition-colors"
-                tabIndex={0}
-                role="link"
-                aria-label={`Open ${file.name}`}
-              >
-                {file.name}
-              </a>
-              <div className="flex gap-1">
-                {file.labels?.map((label, index) => (
-                  <TabLabel key={index} text={label} />
-                ))}
-              </div>
-            </span>
-            {file.size && (
-              <div className="text-gray-200 text-sm group-hover:text-gray-300">
-                {formatBytes(file.size)}
-              </div>
-            )}
-          </div>
-        )
-      })}
+      {filesInfo.map((file, index) => <FileItem key={index} file={file} directory={directory} />)}
     </div>
   )
 }

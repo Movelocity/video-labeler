@@ -23,14 +23,14 @@ function createVideoLabelMap(videoRoot: string, labelsRoot: string) {
       const fullPath = path.join(root, item);
       if (fs.lstatSync(fullPath).isDirectory()) {
         scanDirectory(fullPath, ext, collector);
-      } else if (fullPath.endsWith(ext)) {
-        collector.push(path.relative(ext.endsWith('json')?labelsRoot:videoRoot, fullPath));
+      } else if (fullPath.toLocaleLowerCase().endsWith(ext)) {
+        const realRoot = ext.endsWith('json')?labelsRoot:videoRoot;
+        collector.push(path.relative(realRoot, fullPath));
       }
     });
   };
 
   scanDirectory(videoRoot, '.mp4', videoPaths);
-  scanDirectory(videoRoot, '.MP4', videoPaths);
   scanDirectory(videoRoot, '.mkv', videoPaths);
   // console.log("scanDirectory:", videoRoot, '.mp4', videoPaths)
   scanDirectory(labelsRoot, '.json', labelPaths);
@@ -78,6 +78,7 @@ function extractLabelsFromFile(labelFilePath: string): string[] {
 
 const isVideoFile = (filePath: string) => {
   if (!supportedExtensions.includes(path.extname(filePath))) return false;
+  return true;
 }
 
 export async function GET(req: NextRequest) {
@@ -94,7 +95,6 @@ export async function GET(req: NextRequest) {
 
   // 获取视频到标签的映射
   const videoLabelMap = createVideoLabelMap(VIDEO_ROOT, LABELS_ROOT);
-
   const items = fs.readdirSync(absDir);
   const fileDetails: FileInfo[] = items.map(item => {
     const itemFullPath = path.join(absDir, item);
@@ -102,9 +102,6 @@ export async function GET(req: NextRequest) {
     const relativePath = path.relative(VIDEO_ROOT, itemFullPath);
     const labelFileRelativePath = isFile && isVideoFile(itemFullPath) ? videoLabelMap[relativePath] || '' : '';
     const labelFileFullPath = labelFileRelativePath ? path.join(LABELS_ROOT, labelFileRelativePath) : '';
-
-    // 提取标签列表
-    // console.log("labelFileRelativePath: ", labelFileRelativePath)
     const labels = labelFileRelativePath ? extractLabelsFromFile(labelFileFullPath) : [];
 
     return {
