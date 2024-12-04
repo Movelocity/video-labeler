@@ -3,7 +3,7 @@ import React from 'react'
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { type FileInfo } from '@/common/types'
-import { FaFolder, FaFile, FaFileVideo, FaSpinner } from 'react-icons/fa'
+import { FaFolder, FaFile, FaFileVideo, FaSpinner, FaArrowLeft } from 'react-icons/fa'
 import { isVideoFile } from '@/common/videos';
 import cn from 'classnames';
 function formatBytes(bytes:number) {
@@ -33,10 +33,10 @@ const TabLabel: React.FC<TabLabelProps> = ({text}) => {
   const isStart = text.includes("开始");
   const isEnd = text.includes("结束"); 
   const isHash = text.includes("#");
-  const color = isHash ? "bg-green-600/90" : isStart ? "bg-cyan-600/90" : isEnd ? "bg-orange-600/90" : "bg-gray-600/90";
+  const color = isHash ? "text-green-400" : isStart ? "text-cyan-400" : isEnd ? "text-orange-400" : "text-gray-400";
 
   return (
-    <div className={cn("rounded-sm text-center px-1 text-xs text-white font-medium", color)}>
+    <div className={cn("rounded-md text-center text-xs font-medium bg-gray-700 p-1", color)}>
       {text}
     </div>
   );
@@ -51,7 +51,6 @@ const FileIcon = ({ type, name }: { type: string; name: string }) => {
 
 const FileItem = ({ file, directory }: { directory: string, file: FileInfo }) => {
   const [target, setTarget] = useState("")
-  console.log("file", file)
   useEffect(() => {
     if (file.type === "dir") {
       setTarget("/list-files?directory=" + [directory, file.name].join("/"))
@@ -63,7 +62,7 @@ const FileItem = ({ file, directory }: { directory: string, file: FileInfo }) =>
   return (
     <a
       href={target}
-      className="group h-16 cursor-pointer w-full border-b border-gray-700 flex justify-between items-center px-4 hover:bg-gray-800 transition-colors"
+      className="group h-16 cursor-pointer w-full border-b border-gray-700 flex justify-between items-center px-36 hover:bg-gray-800 transition-colors"
       aria-label={`Open ${file.name}`}
       role="link"
     >
@@ -74,7 +73,7 @@ const FileItem = ({ file, directory }: { directory: string, file: FileInfo }) =>
         >
           {file.name}
         </span>
-        <div className="flex gap-1 overflow-x-hidden">
+        <div className="flex flex-wrap gap-1 overflow-x-hidden w-[500px]">
           {file.labels?.map((label, index) => (
             <TabLabel key={index} text={label} />
           ))}
@@ -148,8 +147,22 @@ function ListFiles() {
   return (
     <div className="h-full w-full">
       {/* Path breadcrumb */}
-      <div className="px-4 py-2 text-sm text-gray-200 border-b border-gray-500">
-        Path: {directory || 'Root'}
+      <div className="px-36 py-2 text-sm text-gray-200 border-b border-gray-500 flex items-center">
+        <span className="text-gray-400 mr-2">
+          路径: {directory || '根路径'}
+        </span>
+        {/** return option */}
+        { directory && (
+          <button 
+            className="text-gray-300 hover:text-gray-300 hover:underline"
+            onClick={() => {
+              const target = directory.split("/").slice(0, -1).join("/")
+              window.location.href = "/list-files?directory=" + target
+            }}
+          >
+            返回上一级
+          </button>
+        )}
       </div>
       
       {filesInfo.map((file, index) => <FileItem key={index} file={file} directory={directory} />)}

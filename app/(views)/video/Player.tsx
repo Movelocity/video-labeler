@@ -4,8 +4,7 @@ import ReactPlayer from 'react-player'
 import BoxesLayer, { type BoxesLayerHandle } from '@/components/BoxesLayer';
 import DynamicInputs from '@/components/DynamicInputs';
 import { AnchorBox } from '@/common/types';
-import { FaPlay, FaPause, FaStepForward, FaStepBackward, FaSave, FaTrash } from 'react-icons/fa';
-import { MdSpeed } from 'react-icons/md';
+import { FaPlay, FaPause, FaSave, FaTrash } from 'react-icons/fa';
 
 const time_diff_threshold = 0.005
 const px = (n: number) => `${n}px`
@@ -215,15 +214,14 @@ const Player = (props: {filepath: string, label_file: string}) => {
       .then(response => response.json())
       .then(data => {
         if(!data.labels) return;
-        // console.log(data)
-        // convert {labels: {time1: v1, time2: v2, ...}} --> [{time: time1, boxes: v1}, {time: time2, boxes: v2}]
+
         const reconstructedData = Object.keys(data.labels).map(time => {
           return {
             time: parseFloat(time),
             boxes: (data.labels[time] as any[]).map(({sx, sy, w, h, label}) => ({sx, sy, w, h, label}))
           }
         })
-        // console.log(reconstructedData)
+
         setLabelData(reconstructedData)
       }).catch(error => {
         console.error('read_label:', error);
