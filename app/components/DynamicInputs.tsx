@@ -11,7 +11,7 @@ const DynamicInputs: React.FC<DynamicInputsProps> = ({onSelectText}) => {
   const editLabels = useStore(state => state.editLabels)
   const [inputs, setInputs] = useState<string[]>([''])
   const {setEditLabels} = mainStore.getState();
-  const [activeIndex, setActiveIndex] = useState(-1); // 当前活跃的输入索引
+  const [activeIndex, setActiveIndex] = useState(0); // 当前活跃的输入索引
   const inputRefs = useRef<HTMLInputElement[]>([]);
   const containerRef = React.createRef<HTMLDivElement>();
   const changeActiveIndex = (index: number) => {

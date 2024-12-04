@@ -1,78 +1,10 @@
 import React, { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle, memo } from 'react';
 import { AnchorBox } from '@/common/types'
+import { BoxesLayerProps, Point, type forwardHandler } from './boxes/types'
+import { randomColor, pointCollidesBox, pointCollidesBoxCorner } from './boxes/utils'
+import { draw } from './boxes/canvas'
 
-const randomColor = () => {
-  return `hsl(${Math.random() * 360}, 70%, 50%)`;
-}
-
-const draw = (canvas: HTMLCanvasElement, boxes: AnchorBox[], activeIndex: number) => {
-  if(!canvas) return
-  const ctx = canvas.getContext('2d')
-  if(!ctx) return
-  const w = ctx.canvas.width
-  const h = ctx.canvas.height
-  ctx.clearRect(0, 0, w, h)
-  for(let idx=boxes.length-1; idx>=0; idx--){  // 不用 forEach 并发绘制，确保第一个框最后绘制
-    const box = boxes[idx]
-    ctx.lineWidth = idx === activeIndex? 3: 2
-    ctx.strokeStyle = box.color? box.color : randomColor()
-    ctx.strokeRect(box.sx * w, box.sy * h, box.w * w, box.h * h)
-
-    const textHeight = 16;
-
-    // 在左上角绘制
-    ctx.font = `${textHeight}px Arial`
-    const textWidth = ctx.measureText(box.label).width
-    const textX = box.sx * w
-    const textY = box.sy * h
-    ctx.fillStyle = box.color? box.color : randomColor();
-    ctx.fillRect(textX-1, textY - textHeight, textWidth+8, textHeight)
-
-    ctx.fillStyle = 'white';
-    ctx.fillText(box.label, textX+4, textY-2);
-  }
-}
-
-type Point = {
-  x: number
-  y: number
-}
-
-const pointCollidesBox = (point: Point, boxes: AnchorBox[]): number => {
-  for (let i = 0; i < boxes.length; i++) {
-    const box = boxes[i];
-    if (
-      point.x >= box.sx && point.x <= box.sx + box.w &&
-      point.y >= box.sy && point.y <= box.sy + box.h
-    )  return i;
-  }
-  return -1;
-}
-
-const pointCollidesBoxCorner = (point: Point, boxes: AnchorBox[]): number => {
-  const deltaY = 0.01;
-  const deltaX = 0.02;
-  for (let i = 0; i < boxes.length; i++) {
-    const box = boxes[i];
-    if (
-      point.x >= box.sx + box.w - deltaX && point.x <= box.sx + box.w + deltaX &&
-      point.y >= box.sy + box.h - deltaY && point.y <= box.sy + box.h + deltaY
-    )  return i;
-  }
-  return -1;
-}
-
-export type BoxesLayerHandle = {
-  getBoxes: () => AnchorBox[],
-  setBoxes: (boxes: AnchorBox[]) => void
-}
-
-type BoxesLayerProps = {
-  width: number;
-  height: number;
-  className?: string;
-  labeltext?: string;
-}
+export type BoxesLayerHandle = forwardHandler;
 
 const BoxesLayer = forwardRef(({
   width,
@@ -80,7 +12,7 @@ const BoxesLayer = forwardRef(({
   className,
   labeltext
 }: BoxesLayerProps, ref) => {
-  const tgBoxIdx= useRef(-1);
+  const tgBoxIdx = useRef(-1);
   const [cursor, setCursor] = useState('default')
   const pointOffet = useRef<Point>({x: 0, y: 0})
   const isDragging = useRef(false)
@@ -88,7 +20,7 @@ const BoxesLayer = forwardRef(({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const boxesRef = useRef<AnchorBox[]>([]);
   const boxStartRef = useRef<Point>({x: 0, y: 0})
-  // const focus = useRef<boolean>(false)
+
   const refresh = () => {
     draw(canvasRef.current!, boxesRef.current, tgBoxIdx.current)
   }
@@ -96,13 +28,10 @@ const BoxesLayer = forwardRef(({
   useImperativeHandle(ref, () => ({
     getBoxes: () => boxesRef.current,
     setBoxes: (newBoxes: AnchorBox[]) => {
-      // 如果没有颜色，就随机给颜色
-      boxesRef.current = newBoxes.map(
-        box => {
-          box.color = box.color??randomColor()
-          return box
-        }
-      );
+      boxesRef.current = newBoxes.map(box => ({
+        ...box,
+        color: box.color ?? randomColor()
+      }));
       refresh();
     }
   }));
@@ -247,12 +176,15 @@ const BoxesLayer = forwardRef(({
     <canvas 
       className={className+" select-none outline-none"}
       style={{cursor: cursor}}
-      ref={canvasRef} width={width} height={height} 
+      ref={canvasRef} 
+      width={width} 
+      height={height} 
       onMouseDown={handleMouseDown} 
       onKeyDown={handleKeyDown}
-      tabIndex={1}// 设置tabIndex, 使得canvas可以接受键盘事件
+      tabIndex={1}
     />
   )
 })
-BoxesLayer.displayName = 'BoxesLayerF';
+
+BoxesLayer.displayName = 'BoxesLayer';
 export default memo(BoxesLayer)

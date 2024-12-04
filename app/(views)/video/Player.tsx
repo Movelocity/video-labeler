@@ -394,45 +394,25 @@ const Player = (props: {filepath: string, label_file: string}) => {
             <button 
               className='p-3 rounded-full bg-green-600 hover:bg-green-500 transition-colors'
               onClick={videoPlayer.togglePlay}
-              title="Play/Pause (Space)"
+              title="播放/暂停 (空格切换)"
             >
               {videoPlayer.playing ? 
                 <FaPause className="w-5 h-5" /> : 
                 <FaPlay className="w-5 h-5" />
               }
             </button>
-
-            {/* <button 
-              className='p-2 rounded-full bg-zinc-700 hover:bg-zinc-600 transition-colors'
-              onClick={videoPlayer.stepForward}
-              title="Next frame (Shift + →)"
-            >
-              <FaStepForward className="w-4 h-4" />
-            </button> */}
           </div>
 
           <div className='text-sm text-slate-300 min-w-[80px]'>
             {second2time(videoPlayer.duration * activeProgress)} / {second2time(videoPlayer.duration)}
           </div>
 
-          {/* <div className='flex items-center space-x-2'>
-            <select
-              className='bg-zinc-700 rounded px-2 py-1 text-sm'
-              value={videoPlayer.playbackRate}
-              onChange={(e) => videoPlayer.setPlaybackRate(Number(e.target.value))}
-            >
-              {[0.25, 0.5, 0.75, 1, 1.25, 1.5, 2].map(rate => (
-                <option key={rate} value={rate}>{rate}x</option>
-              ))}
-            </select>
-            <MdSpeed className="w-4 h-4 text-slate-400" />
-          </div> */}
 
           <div className='flex items-center space-x-2'>
             <button 
               className='flex items-center space-x-1 px-3 py-1.5 bg-zinc-600 hover:bg-zinc-500 rounded-md transition-colors'
               onClick={saveCurrentLabeling}
-              title="Save current frame (Ctrl + S)"
+              title="保存当前帧的标注 (Ctrl + S)"
             >
               <FaSave className="w-4 h-4" />
               <span>Save Frame</span>
@@ -441,7 +421,7 @@ const Player = (props: {filepath: string, label_file: string}) => {
             <button
               className='flex items-center space-x-1 px-3 py-1.5 bg-zinc-600 hover:bg-zinc-500 rounded-md transition-colors'
               onClick={deleteCurrentLabeling}
-              title="Delete current frame (Delete)"
+              title="删除当前帧的标注"
             >
               <FaTrash className="w-4 h-4" />
               <span>Delete Frame</span>
