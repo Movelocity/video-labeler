@@ -3,9 +3,11 @@ import React from 'react'
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { type FileInfo } from '@/common/types'
-import { FaFolder, FaFile, FaFileVideo, FaSpinner, FaArrowLeft } from 'react-icons/fa'
+import { FaFolder, FaFile, FaFileVideo, FaSpinner } from 'react-icons/fa'
 import { isVideoFile } from '@/common/videos';
 import cn from 'classnames';
+import { fetchFiles, getFileTarget, getParentDirectory } from '@/service/routing'
+
 function formatBytes(bytes:number) {
   if(!bytes) return '';
   if (bytes < 0) return ''+bytes;
@@ -51,13 +53,10 @@ const FileIcon = ({ type, name }: { type: string; name: string }) => {
 
 const FileItem = ({ file, directory }: { directory: string, file: FileInfo }) => {
   const [target, setTarget] = useState("")
+  
   useEffect(() => {
-    if (file.type === "dir") {
-      setTarget("/list-files?directory=" + [directory, file.name].join("/"))
-    } else if (isVideoFile(file.name.toLocaleLowerCase())) {
-      setTarget("/video?filepath=" + [directory, file.name].join("/") + "&label_file=" + file.label_file)
-    }
-  }, [file.type, file.name, directory, file.label_file])
+    setTarget(getFileTarget(file, directory))
+  }, [file, directory])
         
   return (
     <a
@@ -102,11 +101,7 @@ function ListFiles() {
     setError(null)
     
     try {
-      const response = await fetch('/api/list-files?directory=' + encodeURI(path))
-      if (!response.ok) {
-        throw new Error('Failed to fetch files')
-      }
-      const files: FileInfo[] = await response.json()
+      const files = await fetchFiles(path)
       setFilesInfo(files)
     } catch (error) {
       setError('Failed to load files. Please try again.')
@@ -118,7 +113,7 @@ function ListFiles() {
 
   useEffect(() => {
     loadFiles(directory)
-  }, [directory, loadFiles]) // Add directory as dependency
+  }, [directory]) // Remove loadFiles from dependency array since it's stable
 
   if (isLoading) {
     return (
@@ -146,17 +141,15 @@ function ListFiles() {
 
   return (
     <div className="h-full w-full">
-      {/* Path breadcrumb */}
       <div className="px-36 py-2 text-sm text-gray-200 border-b border-gray-500 flex items-center">
         <span className="text-gray-400 mr-2">
           路径: {directory || '根路径'}
         </span>
-        {/** return option */}
-        { directory && (
+        {directory && (
           <button 
             className="text-gray-300 hover:text-gray-300 hover:underline"
             onClick={() => {
-              const target = directory.split("/").slice(0, -1).join("/")
+              const target = getParentDirectory(directory)
               window.location.href = "/list-files?directory=" + target
             }}
           >

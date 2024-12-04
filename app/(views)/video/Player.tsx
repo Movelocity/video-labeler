@@ -4,33 +4,22 @@ import ReactPlayer from 'react-player'
 import BoxesLayer, { type BoxesLayerHandle } from '@/components/BoxesLayer';
 import DynamicInputs from '@/components/DynamicInputs';
 import { AnchorBox } from '@/common/types';
-import { FaPlay, FaPause, FaSave, FaTrash } from 'react-icons/fa';
 import { useWindowDimensions } from '@/components/videoPlayer/hooks/useWindowDimensions';
 import { useVideoPlayer } from '@/components/videoPlayer/hooks/useVideoPlayer';
 import { useKeyboardShortcuts } from '@/components/videoPlayer/hooks/useKeyboardShortcuts';
 import { TimelineMarkers } from '@/components/videoPlayer/_partial/TimelineMarkers';
 import { VideoControls } from '@/components/videoPlayer/_partial/VideoControls';
-import { LabelData, Shape } from '@/common/types';
-
+import { LabelData } from '@/common/types';
+import { labelingService } from '@/service/labeling';
+import { videoService } from '@/service/video';
+import { second2time } from '@/components/videoPlayer/utils';
 
 const time_diff_threshold = 0.005
 const px = (n: number) => `${n}px`
-const second2time = (s: number) => {
-  const m = Math.floor(s / 60);
-  const s2 = Math.floor(s % 60);
-  return `${m}:${s2.toString().padStart(2, '0')}`
-}
-
-// Add this helper function near the top
-const formatTooltipTime = (duration: number, fraction: number) => {
-  const currentTime = duration * fraction;
-  return second2time(currentTime);
-}
 
 const Player = (props: {filepath: string, label_file: string}) => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  // const videoPlayer = useVideoPlayer("http://localhost:8888/file/"+props.video_name);
-  const videoPlayer = useVideoPlayer("/api/video?filepath="+props.filepath+"&label_file="+props.label_file);
+  const videoPlayer = useVideoPlayer(videoService.getVideoUrl(props.filepath, props.label_file));
   const [labelText, setLabelText] = useState('');
   const boxesLayerRef = useRef<BoxesLayerHandle>(null);
   /** 
@@ -81,29 +70,17 @@ const Player = (props: {filepath: string, label_file: string}) => {
   const [hasWindow, setHasWindow] = useState(false);
   const hasInit = useRef(false);
   useEffect(() => {
-    // 前端初始化完毕后会执行 N 次。为了确保只执行 1 次，用 hasInit ref 来标记
     if (typeof window !== "undefined" && !hasInit.current) {
       console.log('init')
       setHasWindow(true);
       
-      fetch('/api/labeling?action=read&videopath='+props.filepath+"&label_file="+props.label_file, {
-        method: 'GET'
-      })
-      .then(response => response.json())
-      .then(data => {
-        if(!data.labels) return;
-
-        const reconstructedData = Object.keys(data.labels).map(time => {
-          return {
-            time: parseFloat(time),
-            boxes: (data.labels[time] as any[]).map(({sx, sy, w, h, label}) => ({sx, sy, w, h, label}))
-          }
+      labelingService.readLabels(props.filepath, props.label_file)
+        .then(reconstructedData => {
+          setLabelData(reconstructedData);
         })
-
-        setLabelData(reconstructedData)
-      }).catch(error => {
-        console.error('read_label:', error);
-      });
+        .catch(error => {
+          console.error('read_label:', error);
+        });
       hasInit.current = true;
     }
   }, [props.filepath, props.label_file]);
@@ -115,39 +92,25 @@ const Player = (props: {filepath: string, label_file: string}) => {
     
     const data = {
       video_name: props.filepath,
-      boxes: boxes.map(({ sx, sy, w, h, label }) => ({ sx, sy, w, h, label })),  // 只保留这几个属性
+      boxes: boxes.map(({ sx, sy, w, h, label }) => ({ sx, sy, w, h, label })),
       time: activeProgress
     }
     setLabelData(prev => {
-      // [...prev, {time: data.time, boxes: data.boxes}]
-      // time: 0 ~ 1, 合并时间差 < 0.001 的
-      // 先尝试找到一个时间差符合条件的key
       const targetKey = prev.find(item => Math.abs(item.time - data.time)<time_diff_threshold)?.time
-      if(targetKey) { // 如果找到了，则更新boxes
+      if(targetKey) {
         return prev.map(item => item.time === targetKey ? {...item, boxes: data.boxes} : item)
-      } else {// 如果没有找到，则添加新的记录
+      } else {
         return [...prev, data]
       }
     })
-    fetch("/api/labeling?action=write&videopath="+props.filepath+"&label_file="+props.label_file, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
+    labelingService.saveLabeling(data, props.label_file);
   }, [activeProgress, boxesLayerRef.current?.getBoxes(), props.filepath, props.label_file])
   
   const deleteCurrentLabeling = useCallback(() => {
     console.log('delete current labeling')
     
     setLabelData(labelData.filter(item => Math.abs(item.time - activeProgress)>time_diff_threshold))
-    fetch("/api/labeling?action=delete&videopath="+props.filepath+"&time="+activeProgress+"&label_file="+props.label_file, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
+    labelingService.deleteLabeling(props.filepath, activeProgress, props.label_file);
     boxesLayerRef.current?.setBoxes([])
   }, [activeProgress, labelData, props.filepath, props.label_file])
 
@@ -208,7 +171,7 @@ const Player = (props: {filepath: string, label_file: string}) => {
 
           {/* Timeline control */}
           <div
-            className='relative h-4 w-full rounded-full overflow-hidden'
+            className='relative h-4 w-full rounded-sm overflow-hidden'
             onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => {updateProgress(e.clientX)}}
             role="slider"
             aria-label="Video progress"
@@ -230,8 +193,7 @@ const Player = (props: {filepath: string, label_file: string}) => {
             />
             {/* Progress handle */}
             <div
-              className='absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full 
-                         shadow-lg transition-transform duration-100 hover:scale-125'
+              className='absolute top-1/2 -translate-y-1/2 w-1 h-3 bg-white'
               style={{left: `${activeProgress * 100}%`, transform: `translateX(-50%) translateY(-50%)`}}
             />
           </div>
