@@ -13,7 +13,7 @@ import { LabelData } from '@/common/types';
 import { labelingService } from '@/service/labeling';
 import { videoService } from '@/service/video';
 import { second2time } from '@/components/videoPlayer/utils';
-import { TimelineLabelDisplay } from '@/components/videoPlayer/_partial/TimelineLabelDisplay';
+import { TimeLabelDetails } from '@/components/videoPlayer/_partial/TimeLabelDetails';
 
 const time_diff_threshold = 0.005
 const px = (n: number) => `${n}px`
@@ -214,7 +214,7 @@ const Player = (props: {filepath: string, label_file: string}) => {
         {/** 提示文本 */}
         <DynamicInputs onSelectText={setLabelText}/>
 
-        <TimelineLabelDisplay
+        <TimeLabelDetails
           labelData={labelData}
           duration={videoPlayer.duration}
           onMarkerClick={(time, boxes) => {

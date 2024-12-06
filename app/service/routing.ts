@@ -23,7 +23,7 @@ export const getFileTarget = (file: FileInfo, directory: string): string => {
     return "/video?filepath=" + [directory, file.name].join("/") + "&label_file=" + file.label_file
   }
   
-  return ""
+  return "#!"
 }
 
 /**

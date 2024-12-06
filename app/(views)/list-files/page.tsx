@@ -35,10 +35,10 @@ const TabLabel: React.FC<TabLabelProps> = ({text}) => {
   const isStart = text.includes("开始");
   const isEnd = text.includes("结束"); 
   const isHash = text.includes("#");
-  const color = isHash ? "text-green-400" : isStart ? "text-cyan-400" : isEnd ? "text-orange-400" : "text-gray-400";
+  const color = isHash ? "text-emerald-500" : isStart ? "text-sky-500" : isEnd ? "text-rose-500" : "text-neutral-400";
 
   return (
-    <div className={cn("rounded-md text-center text-xs font-medium bg-gray-700 p-1", color)}>
+    <div className={cn("h-6 rounded-md text-center text-xs font-medium border border-gray-500 p-1", color)}>
       {text}
     </div>
   );
@@ -47,16 +47,58 @@ const TabLabel: React.FC<TabLabelProps> = ({text}) => {
 const FileIcon = ({ type, name }: { type: string; name: string }) => {
   if (type === "dir") return <FaFolder className="w-6 h-6 text-blue-500" />
   if(isVideoFile(name.toLocaleLowerCase()))
-    return <FaFileVideo className="w-6 h-6 text-purple-500" />
+    return <FaFileVideo className="w-6 h-6 text-purple-400" />
   return <FaFile className="w-6 h-6 text-gray-500" />
 }
 
 const FileItem = ({ file, directory }: { directory: string, file: FileInfo }) => {
   const [target, setTarget] = useState("")
-  
+  const [labelContainerWidth, setLabelContainerWidth] = useState(0)
+  const [truncatedLabels, setTruncatedLabels] = useState<string[]>([])
+  const labelContainerRef = React.useRef<HTMLDivElement>(null)
+
   useEffect(() => {
-    setTarget(getFileTarget(file, directory))
+    const target = getFileTarget(file, directory)
+    setTarget(target)
   }, [file, directory])
+
+  useEffect(() => {
+    const handleResize = () => {
+      requestAnimationFrame(() => {
+        if (labelContainerRef.current) {
+          const width = labelContainerRef.current.offsetWidth
+          if (width !== labelContainerWidth) {
+            setLabelContainerWidth(width)
+          }
+        }
+      })
+    }
+
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [labelContainerWidth])
+
+  useEffect(() => {
+    if (!file.labels) return
+
+    const calculateTruncatedLabels = () => {
+      const avgCharWidth = 8 // Approximate width per character in pixels
+      const labelPadding = 16 // Padding for each label
+      const availableWidth = labelContainerWidth - (file.labels.length * labelPadding)
+      const totalChars = Math.floor(availableWidth / avgCharWidth)
+      const charsPerLabel = Math.floor(totalChars / file.labels.length)
+
+      return file.labels.map(label => {
+        if (label.length > charsPerLabel) {
+          return label.slice(0, Math.max(charsPerLabel - 2)) + '...'
+        }
+        return label
+      })
+    }
+
+    setTruncatedLabels(calculateTruncatedLabels())
+  }, [file.labels, labelContainerWidth])
         
   return (
     <a
@@ -72,9 +114,15 @@ const FileItem = ({ file, directory }: { directory: string, file: FileInfo }) =>
         >
           {file.name}
         </span>
-        <div className="flex flex-wrap gap-1 overflow-x-hidden w-[500px]">
-          {file.labels?.map((label, index) => (
-            <TabLabel key={index} text={label} />
+        <div 
+          ref={labelContainerRef}
+          className="flex flex-wrap gap-1 overflow-y-hidden w-[800px]"
+        >
+          {truncatedLabels.map((label, index) => (
+            <TabLabel 
+              key={index} 
+              text={label}
+            />
           ))}
         </div>
       </span>
@@ -134,13 +182,13 @@ function ListFiles() {
   if (filesInfo.length === 0) {
     return (
       <div className="h-full w-full flex items-center justify-center text-gray-500">
-        This folder is empty
+        文件夹为空
       </div>
     )
   }
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full pb-8">
       <div className="px-36 py-2 text-sm text-gray-200 border-b border-gray-500 flex items-center">
         <span className="text-gray-400 mr-2">
           路径: {directory || '根路径'}

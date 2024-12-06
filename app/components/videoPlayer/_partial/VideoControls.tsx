@@ -1,5 +1,6 @@
 import { FaPlay, FaPause, FaSave, FaTrash } from 'react-icons/fa';
 import { second2time } from '../utils';
+import { useRouter } from 'next/navigation';
 
 type VideoControlsProps = {
   playing: boolean;
@@ -18,8 +19,15 @@ export const VideoControls = ({
   onSave,
   onDelete
 }: VideoControlsProps) => {
+  const router = useRouter();
   return (
-    <div className='flex flex-row p-3 mx-auto items-center space-x-3'>
+    <div className='flex flex-row justify-between p-3 mx-auto items-center space-x-3 w-full'>
+      <div 
+        className='text-sm text-slate-300 min-w-[80px] cursor-pointer hover:text-slate-400 transition-colors'
+        onClick={() => router.back()}
+      >
+        返回上一页面
+      </div>
       <div className='flex items-center space-x-2'>
         <button 
           className='p-3 rounded-full bg-green-600 hover:bg-green-500 transition-colors'
@@ -44,7 +52,7 @@ export const VideoControls = ({
           title="保存当前帧的标注 (Ctrl + S)"
         >
           <FaSave className="w-4 h-4" />
-          <span>Save Frame</span>
+          <span>保存帧标注</span>
         </button>
 
         <button
@@ -53,7 +61,7 @@ export const VideoControls = ({
           title="删除当前帧的标注"
         >
           <FaTrash className="w-4 h-4" />
-          <span>Delete Frame</span>
+          <span>删除帧标注</span>
         </button>
       </div>
     </div>

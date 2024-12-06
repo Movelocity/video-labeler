@@ -2,19 +2,19 @@ import { AnchorBox, LabelData } from '@/common/types';
 import { second2time } from '../utils';
 import cn from 'classnames';
 
-type TimelineLabelDisplayProps = {
+type TimeLabelDetailsProps = {
   labelData: LabelData[];
   duration: number;
   onMarkerClick: (time: number, boxes: AnchorBox[]) => void;
   activeTime?: number;
 };
 
-export const TimelineLabelDisplay = ({ 
+export const TimeLabelDetails = ({ 
   labelData, 
   duration, 
   onMarkerClick,
   activeTime 
-}: TimelineLabelDisplayProps) => {
+}: TimeLabelDetailsProps) => {
   return (
     <div className="my-4 p-4 bg-slate-800/80 rounded-lg shadow-lg border border-slate-700 space-y-2">
       <div className="text-slate-300 text-sm mb-3">
