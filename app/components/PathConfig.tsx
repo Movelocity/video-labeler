@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { fetchPathConfig, updatePathConfig, validatePath } from '@/service/routing';
 
 interface PathConfigProps {
   onSuccess?: () => void;
@@ -15,11 +16,9 @@ export const PathConfig = ({ onSuccess, vidPathUpdater }: PathConfigProps) => {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchCurrentPaths = async () => {
+    const loadConfig = async () => {
       try {
-        const response = await fetch('/api/get-paths');
-        const data = await response.json();
-        
+        const data = await fetchPathConfig();
         setVideoRoot(data.videoRoot || '');
         setLabelsRoot(data.labelsRoot || '');
       } catch (err) {
@@ -29,34 +28,24 @@ export const PathConfig = ({ onSuccess, vidPathUpdater }: PathConfigProps) => {
       }
     };
 
-    fetchCurrentPaths();
+    loadConfig();
   }, []);
-
-  const validatePathInput = (path: string): string => {
-    const trimmedPath = path.trim().replaceAll('"', ''); // Remove surrounding quotes if present
-    console.log(trimmedPath)
-    if (!/^[a-zA-Z]:\\/.test(trimmedPath) && !trimmedPath.startsWith('/')) {
-      return '请输入有效的完整路径';
-    }
-    
-    return '';
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
     if (videoRoot) {
-      const videoPathError = validatePathInput(videoRoot);
+      const videoPathError = validatePath(videoRoot);
       if (videoPathError) {
         setError(videoPathError);
         return;
       }
-      vidPathUpdater?.(videoRoot||'');
+      vidPathUpdater?.(videoRoot);
     }
     
     if (labelsRoot) {
-      const labelsPathError = validatePathInput(labelsRoot);
+      const labelsPathError = validatePath(labelsRoot);
       if (labelsPathError) {
         setError(labelsPathError);
         return;
@@ -66,23 +55,11 @@ export const PathConfig = ({ onSuccess, vidPathUpdater }: PathConfigProps) => {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/update-paths', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          videoRoot: videoRoot.trim() || undefined,
-          labelsRoot: labelsRoot.trim() || undefined,
-        }),
+      await updatePathConfig({
+        videoRoot: videoRoot || undefined,
+        labelsRoot: labelsRoot || undefined,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || '更新失败');
-      }
-
+      
       onSuccess?.();
       router.refresh();
     } catch (err) {

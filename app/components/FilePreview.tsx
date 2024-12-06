@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react';
 import { FileInfo } from '@/common/types';
-import { FaFolder, FaFile, FaFileVideo, FaSpinner } from 'react-icons/fa'
+import { FaFolder, FaFile } from 'react-icons/fa';
 import Link from 'next/link';
+import { fetchFiles } from '@/service/routing';
+
 export const FilePreview = (props: {dir: string}) => {
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchFiles = async () => {
+    const loadFiles = async () => {
       try {
-        const response = await fetch('/api/list-files');
-        const data = await response.json();
+        const data = await fetchFiles(props.dir);
         setFiles(data);
       } catch (err) {
         setError('加载文件列表失败');
@@ -20,7 +21,7 @@ export const FilePreview = (props: {dir: string}) => {
       }
     };
 
-    fetchFiles();
+    loadFiles();
   }, [props.dir]);
 
   if (loading) {
