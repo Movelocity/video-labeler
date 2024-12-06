@@ -3,7 +3,7 @@ import { useEffect, useState, useRef, useCallback, memo } from 'react';
 import ReactPlayer from 'react-player'
 import BoxesLayer, { type BoxesLayerHandle } from '@/components/BoxesLayer';
 import DynamicInputs from '@/components/DynamicInputs';
-import { AnchorBox } from '@/common/types';
+// import { AnchorBox } from '@/common/types';
 import { useWindowDimensions } from '@/components/videoPlayer/hooks/useWindowDimensions';
 import { useVideoPlayer } from '@/components/videoPlayer/hooks/useVideoPlayer';
 import { useKeyboardShortcuts } from '@/components/videoPlayer/hooks/useKeyboardShortcuts';
@@ -13,6 +13,7 @@ import { LabelData } from '@/common/types';
 import { labelingService } from '@/service/labeling';
 import { videoService } from '@/service/video';
 import { second2time } from '@/components/videoPlayer/utils';
+import { TimelineLabelDisplay } from '@/components/videoPlayer/_partial/TimelineLabelDisplay';
 
 const time_diff_threshold = 0.005
 const px = (n: number) => `${n}px`
@@ -212,6 +213,15 @@ const Player = (props: {filepath: string, label_file: string}) => {
       <div className='flex flex-col h-full pr-12 '>
         {/** 提示文本 */}
         <DynamicInputs onSelectText={setLabelText}/>
+
+        <TimelineLabelDisplay
+          labelData={labelData}
+          duration={videoPlayer.duration}
+          onMarkerClick={(time, boxes) => {
+            boxesLayerRef.current?.setBoxes(boxes)
+            updateProgressView(time)
+          }}
+        />
       </div>
     </div>
   );
