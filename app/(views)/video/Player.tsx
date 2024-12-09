@@ -3,13 +3,12 @@ import { useEffect, useState, useRef, useCallback, memo } from 'react';
 import ReactPlayer from 'react-player'
 import BoxesLayer, { type BoxesLayerHandle } from '@/components/BoxesLayer';
 import DynamicInputs from '@/components/DynamicInputs';
-// import { AnchorBox } from '@/common/types';
 import { useWindowDimensions } from '@/components/videoPlayer/hooks/useWindowDimensions';
 import { useVideoPlayer } from '@/components/videoPlayer/hooks/useVideoPlayer';
 import { useKeyboardShortcuts } from '@/components/videoPlayer/hooks/useKeyboardShortcuts';
 import { TimelineMarkers } from '@/components/videoPlayer/_partial/TimelineMarkers';
 import { VideoControls } from '@/components/videoPlayer/_partial/VideoControls';
-import { LabelData } from '@/common/types';
+import { AnchorBox, LabelDataV2, LabelObject } from '@/common/types';
 import { labelingService } from '@/service/labeling';
 import { videoService } from '@/service/video';
 import { second2time } from '@/components/videoPlayer/utils';
@@ -23,11 +22,12 @@ const Player = (props: {filepath: string, label_file: string}) => {
   const videoPlayer = useVideoPlayer(videoService.getVideoUrl(props.filepath, props.label_file));
   const [labelText, setLabelText] = useState('');
   const boxesLayerRef = useRef<BoxesLayerHandle>(null);
-  /** 
-   * 后端可以用 {time1: [], time2: [], ...} 存储，
-   * 前端用 useState 应该用不了动态 key。所以采用列表存储这些数据 [{time: time1, boxes: []}, {time: time2, boxes: []}] 
-  */
-  const [labelData, setLabelData] = useState<LabelData[]>([])
+  
+  const [labelData, setLabelData] = useState<LabelDataV2>({
+    metadata: {},
+    objects: [],
+    version: 2
+  });
 
   // 计算视频组件的尺寸
   const calculateVideoSize = useCallback(() => {
@@ -64,9 +64,8 @@ const Player = (props: {filepath: string, label_file: string}) => {
   }, [updateProgressView])
 
   useEffect(() => {
-    setActiveProgress(videoPlayer.progress);  // 0 ~ 1
+    setActiveProgress(videoPlayer.progress);
   }, [videoPlayer.progress]);
-
 
   const [hasWindow, setHasWindow] = useState(false);
   const hasInit = useRef(false);
@@ -75,9 +74,9 @@ const Player = (props: {filepath: string, label_file: string}) => {
       console.log('init')
       setHasWindow(true);
       
-      labelingService.readLabels(props.filepath, props.label_file)
-        .then(reconstructedData => {
-          setLabelData(reconstructedData);
+      labelingService.readLabelsV2(props.filepath, props.label_file)
+        .then(data => {
+          setLabelData(data);
         })
         .catch(error => {
           console.error('read_label:', error);
@@ -91,29 +90,95 @@ const Player = (props: {filepath: string, label_file: string}) => {
     const boxes = boxesLayerRef.current?.getBoxes() || [];
     if(boxes.length === 0) return;
     
-    const data = {
-      video_name: props.filepath,
-      boxes: boxes.map(({ sx, sy, w, h, label }) => ({ sx, sy, w, h, label })),
-      time: activeProgress
-    }
-    setLabelData(prev => {
-      const targetKey = prev.find(item => Math.abs(item.time - data.time)<time_diff_threshold)?.time
-      if(targetKey) {
-        return prev.map(item => item.time === targetKey ? {...item, boxes: data.boxes} : item)
-      } else {
-        return [...prev, data]
+    // 将新的标注框按标签分组
+    const boxesByLabel = new Map<string, AnchorBox>();
+    boxes.forEach(box => {
+      const baseLabel = box.label.replace(/_(开始|结束)$/, '');
+      boxesByLabel.set(baseLabel, box);
+    });
+
+    // 准备更新对象
+    const object_updates: LabelObject[] = Array.from(boxesByLabel.entries()).map(([baseLabel, box]) => ({
+      label: baseLabel,
+      timeline: {
+        [activeProgress.toString()]: box
       }
-    })
-    labelingService.saveLabeling(data, props.label_file);
-  }, [activeProgress, boxesLayerRef.current?.getBoxes(), props.filepath, props.label_file])
+    }));
+
+    // 更新状态
+    setLabelData(prev => {
+      const newObjects = [...prev.objects];
+      
+      object_updates.forEach(update => {
+        const existingIndex = newObjects.findIndex(obj => obj.label === update.label);
+        if (existingIndex !== -1) {
+          // 更新现有对象的时间线
+          newObjects[existingIndex] = {
+            ...newObjects[existingIndex],
+            timeline: {
+              ...newObjects[existingIndex].timeline,
+              ...update.timeline
+            }
+          };
+        } else {
+          // 添加新对象
+          newObjects.push(update);
+        }
+      });
+
+      return {
+        ...prev,
+        objects: newObjects
+      };
+    });
+
+    // 保存到服务器
+    labelingService.saveLabelingV2({
+      video_name: props.filepath,
+      object_updates
+    }, props.label_file);
+  }, [activeProgress, boxesLayerRef.current?.getBoxes(), props.filepath, props.label_file]);
   
   const deleteCurrentLabeling = useCallback(() => {
-    console.log('delete current labeling')
+    console.log('delete current labeling');
     
-    setLabelData(labelData.filter(item => Math.abs(item.time - activeProgress)>time_diff_threshold))
-    labelingService.deleteLabeling(props.filepath, activeProgress, props.label_file);
-    boxesLayerRef.current?.setBoxes([])
-  }, [activeProgress, labelData, props.filepath, props.label_file])
+    // 获取当前时���点的所有标签
+    const currentBoxes = boxesLayerRef.current?.getBoxes() || [];
+    const labelsToDelete = new Set(currentBoxes.map(box => box.label.replace(/_(开始|结束)$/, '')));
+
+    // 更新状态
+    setLabelData(prev => {
+      const newObjects = prev.objects.map(obj => {
+        if (labelsToDelete.has(obj.label)) {
+          // 删除该时间点的标注
+          const newTimeline = { ...obj.timeline };
+          Object.keys(newTimeline).forEach(time => {
+            if (Math.abs(parseFloat(time) - activeProgress) < time_diff_threshold) {
+              delete newTimeline[time];
+            }
+          });
+          return { ...obj, timeline: newTimeline };
+        }
+        return obj;
+      }).filter(obj => Object.keys(obj.timeline).length > 0); // 移除空的对象
+
+      return {
+        ...prev,
+        objects: newObjects
+      };
+    });
+
+    // 删除服务器数据
+    Promise.all(Array.from(labelsToDelete).map(label =>
+      labelingService.deleteLabelingV2({
+        video_name: props.filepath,
+        label,
+        time: activeProgress
+      }, props.label_file)
+    ));
+
+    boxesLayerRef.current?.setBoxes([]);
+  }, [activeProgress, props.filepath, props.label_file]);
 
   // Add keyboard shortcuts
   useKeyboardShortcuts({
@@ -124,11 +189,13 @@ const Player = (props: {filepath: string, label_file: string}) => {
     deleteCurrentLabeling,
   });
 
+  const [selectedObject, setSelectedObject] = useState<string | undefined>();
+
   return (
     <div className='flex flex-row pt-4'>
       <div className='mx-auto flex flex-col h-full' style={{width: px(videoSize.width)}}>
         <div className='relative bg-gray-500 select-none' style={{height: px(videoSize.height)}}>
-          { hasWindow && // 避免在服务端渲染时触发错误。视频播放器仅支持客户端渲染。
+          { hasWindow && 
             <ReactPlayer
               ref={videoPlayer.playerRef}
               className='absolute top-0 left-0'
@@ -142,7 +209,6 @@ const Player = (props: {filepath: string, label_file: string}) => {
               onReady={videoPlayer.handleReady}
             />
           }
-          {/** 视频遮罩层，用来绘制目标框 */}
           <BoxesLayer 
             className='absolute top-0 left-0' 
             width={videoSize.width} 
@@ -153,7 +219,6 @@ const Player = (props: {filepath: string, label_file: string}) => {
         </div>
 
         <div className='' style={{width: px(videoSize.width)}}>
-          {/* Timeline timestamps */}
           <div className='text-slate-300 text-xs w-full flex flex-row justify-between mb-1'>
             <span>00:00</span>
             <span>{second2time(videoPlayer.duration*0.25)}</span>
@@ -168,9 +233,9 @@ const Player = (props: {filepath: string, label_file: string}) => {
               boxesLayerRef.current?.setBoxes(boxes)
               updateProgressView(time)
             }}
+            selectedObject={selectedObject}
           />
 
-          {/* Timeline control */}
           <div
             className='relative h-4 w-full rounded-sm overflow-hidden'
             onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => {updateProgress(e.clientX)}}
@@ -185,14 +250,11 @@ const Player = (props: {filepath: string, label_file: string}) => {
               if (e.key === 'ArrowLeft') updateProgressView(Math.max(0, activeProgress - 0.01));
             }}
           >
-            {/* Progress bar background */}
             <div className='absolute inset-0 bg-slate-700' ref={progressBarRef} />
-            {/* Progress bar filled */}
             <div 
               className='absolute inset-y-0 left-0 bg-slate-400 transition-all duration-100'
               style={{width: `${activeProgress * 100}%`}}
             />
-            {/* Progress handle */}
             <div
               className='absolute top-1/2 -translate-y-1/2 w-1 h-3 bg-white'
               style={{left: `${activeProgress * 100}%`, transform: `translateX(-50%) translateY(-50%)`}}
@@ -200,7 +262,6 @@ const Player = (props: {filepath: string, label_file: string}) => {
           </div>
         </div>
             
-        {/** 按钮组 */}
         <VideoControls 
           playing={videoPlayer.playing}
           duration={videoPlayer.duration}
@@ -211,7 +272,6 @@ const Player = (props: {filepath: string, label_file: string}) => {
         />
       </div>
       <div className='flex flex-col h-full pr-12 '>
-        {/** 提示文本 */}
         <DynamicInputs onSelectText={setLabelText}/>
 
         <TimeLabelDetails
@@ -221,10 +281,14 @@ const Player = (props: {filepath: string, label_file: string}) => {
             boxesLayerRef.current?.setBoxes(boxes)
             updateProgressView(time)
           }}
+          activeTime={activeProgress}
+          selectedObject={selectedObject}
+          onObjectSelect={setSelectedObject}
         />
       </div>
     </div>
   );
 }
+
 Player.displayName = "Player"
 export default memo(Player)
