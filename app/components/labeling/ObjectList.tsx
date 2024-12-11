@@ -5,9 +5,10 @@ import { KeyFrameViewer } from './KeyFrameViewer';
 
 interface ObjectListProps {
   label_file: string;
+  to_progress: (frame: number) => void;
 }
 
-export const ObjectList = ({ label_file }: ObjectListProps) => {
+export const ObjectList = ({ label_file, to_progress }: ObjectListProps) => {
   const { labelData, selectedObject, setSelectedObject, selectedObjectData } = useLabeling(label_file);
   
   // 为每个对象分配颜色（如果没有的话）
@@ -29,7 +30,7 @@ export const ObjectList = ({ label_file }: ObjectListProps) => {
 
   return (
     <div className="flex flex-col gap-4 w-[30%] ml-4">
-      <ul className="space-y-2 h-[200px] overflow-y-scroll">
+      <ul className="space-y-2 max-h-[400px] overflow-y-scroll">
         {objectsWithColors?.map((obj, idx) => (
           <li 
             key={idx}
@@ -62,6 +63,7 @@ export const ObjectList = ({ label_file }: ObjectListProps) => {
         <KeyFrameViewer 
           timeline={selectedObjectData.timeline}
           color={selectedObjectData.color || randomColor()}
+          jump_to_frame={to_progress}
         />
       )}
     </div>

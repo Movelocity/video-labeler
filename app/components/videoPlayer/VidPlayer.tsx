@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useRef, useCallback,FC } from 'react';
+import { useEffect, useState, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import ReactPlayer from 'react-player'
 import { useWindowDimensions } from '@/components/videoPlayer/hooks/useWindowDimensions';
 import { useVideoPlayer } from '@/components/videoPlayer/hooks/useVideoPlayer';
@@ -17,7 +17,13 @@ interface PlayerProps {
   canvas_layer?: React.ReactNode;
 }
 
-export const VidPlayer: FC<PlayerProps> = ({video_file, label_file, canvas_layer}) => {
+export interface VidPlayerHandle {
+  seekTo: (fraction: number) => void;
+  getCurrentTime: () => number;
+  getDuration: () => number;
+}
+
+export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_file, label_file, canvas_layer}, ref) => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const videoPlayer = useVideoPlayer(videoService.getVideoUrl(video_file, label_file));
 
@@ -91,6 +97,20 @@ export const VidPlayer: FC<PlayerProps> = ({video_file, label_file, canvas_layer
     return () => clearInterval(interval);
   }, [videoPlayer.playing]);
 
+  // 暴露方法给外部
+  useImperativeHandle(ref, () => ({
+    seekTo: (fraction: number) => {
+      updateProgressView(fraction);
+    },
+    getCurrentTime: () => {
+      const player = videoPlayer.playerRef.current?.getInternalPlayer() as HTMLVideoElement;
+      return player ? player.currentTime : 0;
+    },
+    getDuration: () => {
+      return videoPlayer.duration;
+    }
+  }));
+
   return (
     <div className='flex flex-row'>
       <div className='mx-auto flex flex-col h-full' style={{width: px(videoSize.width)}}>
@@ -134,4 +154,6 @@ export const VidPlayer: FC<PlayerProps> = ({video_file, label_file, canvas_layer
       </div>
     </div>
   );
-}
+})
+
+VidPlayer.displayName = 'VidPlayer';
