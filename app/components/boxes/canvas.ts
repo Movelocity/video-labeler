@@ -1,4 +1,4 @@
-import { AnchorBox } from '@/common/types'
+import { AnchorBox } from '@/lib/types'
 import { randomColor } from './utils'
 
 // 在画布上绘制所有框
@@ -15,7 +15,7 @@ export const draw = (canvas: HTMLCanvasElement, boxes: AnchorBox[], activeIndex:
   for(let idx=boxes.length-1; idx>=0; idx--){
     const box = boxes[idx]
     ctx.lineWidth = idx === activeIndex? 3: 2
-    ctx.strokeStyle = box.color ?? randomColor()
+    ctx.strokeStyle = randomColor()
     ctx.strokeRect(box.sx * w, box.sy * h, box.w * w, box.h * h)
 
     // 绘制标签
@@ -25,7 +25,7 @@ export const draw = (canvas: HTMLCanvasElement, boxes: AnchorBox[], activeIndex:
     const textX = box.sx * w
     const textY = box.sy * h
     
-    ctx.fillStyle = box.color ?? randomColor();
+    ctx.fillStyle = randomColor();
     ctx.fillRect(textX-1, textY - textHeight, textWidth+8, textHeight)
 
     ctx.fillStyle = 'white';

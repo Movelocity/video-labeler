@@ -1,4 +1,4 @@
-import { AnchorBox } from '@/common/types'
+import { AnchorBox } from '@/lib/types'
 
 export type Point = {
   x: number

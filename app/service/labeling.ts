@@ -1,4 +1,4 @@
-import { LabelData, AnchorBox } from '@/common/types';
+import { LabelData, AnchorBox } from '@/lib/types';
 
 interface SaveLabelingParams {
   video_name: string;

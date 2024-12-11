@@ -28,10 +28,11 @@ const BoxesLayer = forwardRef(({
   useImperativeHandle(ref, () => ({
     getBoxes: () => boxesRef.current,
     setBoxes: (newBoxes: AnchorBox[]) => {
-      boxesRef.current = newBoxes.map(box => ({
-        ...box,
-        color: box.color ?? randomColor()
-      }));
+      // 更新中
+      // boxesRef.current = newBoxes.map(box => ({
+      //   ...box,
+      //   color: box.color ?? randomColor()
+      // }));
       refresh();
     }
   }));
@@ -81,8 +82,8 @@ const BoxesLayer = forwardRef(({
       }
       isDragging.current = true
     } else {
-      // 鼠标无点按任何框，则新增
-      boxesRef.current.push({sx: point.x, sy: point.y, w:0.01, h:0.02, label:labeltext?labeltext:'empty', color: randomColor()})
+      // 鼠标无点按任何框，则新增 - 更新中
+      // boxesRef.current.push({sx: point.x, sy: point.y, w:0.01, h:0.02, label:labeltext?labeltext:'empty', color: randomColor()})
       tgBoxIdx.current = boxesRef.current.length -1
       isResizing.current = true
       boxStartRef.current = point

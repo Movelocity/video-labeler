@@ -73,14 +73,14 @@ const Player = (props: {filepath: string, label_file: string}) => {
     if (typeof window !== "undefined" && !hasInit.current) {
       console.log('init')
       setHasWindow(true);
-      
-      labelingService.readLabelsV2(props.filepath, props.label_file)
-        .then(data => {
-          setLabelData(data);
-        })
-        .catch(error => {
-          console.error('read_label:', error);
-        });
+      // - 更新中
+      // labelingService.readLabelsV2(props.filepath, props.label_file)
+      //   .then(data => {
+      //     setLabelData(data);
+      //   })
+      //   .catch(error => {
+      //     console.error('read_label:', error);
+      //   });
       hasInit.current = true;
     }
   }, [props.filepath, props.label_file]);
@@ -97,34 +97,34 @@ const Player = (props: {filepath: string, label_file: string}) => {
       boxesByLabel.set(baseLabel, box);
     });
 
-    // 准备更新对象
-    const object_updates: LabelObject[] = Array.from(boxesByLabel.entries()).map(([baseLabel, box]) => ({
-      label: baseLabel,
-      timeline: {
-        [activeProgress.toString()]: box
-      }
-    }));
+    // 准备更新对象 - 更新中
+    // const object_updates: LabelObject[] = Array.from(boxesByLabel.entries()).map(([baseLabel, box]) => ({
+    //   label: baseLabel,
+    //   timeline: {
+    //     [activeProgress.toString()]: box
+    //   }
+    // }));
 
     // 更新状态
     setLabelData(prev => {
       const newObjects = [...prev.objects];
-      
-      object_updates.forEach(update => {
-        const existingIndex = newObjects.findIndex(obj => obj.label === update.label);
-        if (existingIndex !== -1) {
-          // 更新现有对象的时间线
-          newObjects[existingIndex] = {
-            ...newObjects[existingIndex],
-            timeline: {
-              ...newObjects[existingIndex].timeline,
-              ...update.timeline
-            }
-          };
-        } else {
-          // 添加新对象
-          newObjects.push(update);
-        }
-      });
+      // - 更新中
+      // object_updates.forEach(update => {
+      //   const existingIndex = newObjects.findIndex(obj => obj.label === update.label);
+      //   if (existingIndex !== -1) {
+      //     // 更新现有对象的时间线
+      //     newObjects[existingIndex] = {
+      //       ...newObjects[existingIndex],
+      //       timeline: {
+      //         ...newObjects[existingIndex].timeline,
+      //         ...update.timeline
+      //       }
+      //     };
+      //   } else {
+      //     // 添加新对象
+      //     newObjects.push(update);
+      //   }
+      // });
 
       return {
         ...prev,
@@ -132,11 +132,11 @@ const Player = (props: {filepath: string, label_file: string}) => {
       };
     });
 
-    // 保存到服务器
-    labelingService.saveLabelingV2({
-      video_name: props.filepath,
-      object_updates
-    }, props.label_file);
+    // 保存到服务器 - 更新中
+    // labelingService.saveLabelingV2({
+    //   video_name: props.filepath,
+    //   object_updates
+    // }, props.label_file);
   }, [activeProgress, boxesLayerRef.current?.getBoxes(), props.filepath, props.label_file]);
   
   const deleteCurrentLabeling = useCallback(() => {
