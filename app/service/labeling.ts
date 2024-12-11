@@ -1,4 +1,4 @@
-import { LabelData, AnchorBox } from '@/lib/types';
+import { LabelData, AnchorBox, LabelDataV2 } from '@/lib/types';
 
 interface SaveLabelingParams {
   video_name: string;
@@ -15,12 +15,12 @@ interface LabelObject {
   timeline: TimelineEntry;
 }
 
-interface LabelDataV2 {
-  metadata: Record<string, any>;
-  labels?: Record<string, AnchorBox[]>;
-  objects: LabelObject[];
-  version: 2;
-}
+// interface LabelDataV2 {
+//   metadata: Record<string, any>;
+//   labels?: Record<string, AnchorBox[]>;
+//   objects: LabelObject[];
+//   version: 2;
+// }
 
 interface SaveLabelingV2Params {
   video_name: string;

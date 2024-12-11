@@ -10,7 +10,7 @@ export default function NavBar() {
 
   return (
     <nav className="w-full h-10 bg-slate-800 shadow-sm fixed top-0 left-0 right-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
+      <div className="px-4 h-full flex items-center justify-between">
         <Link
           href="/list-files"
           className="px-2 py-1 text-sm text-slate-200 rounded-md hover:text-white transition-colors"

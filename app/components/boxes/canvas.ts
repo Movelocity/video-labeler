@@ -1,5 +1,5 @@
 import { AnchorBox } from '@/lib/types'
-import { randomColor } from './utils'
+import { randomColor } from '@/lib/utils'
 
 // 在画布上绘制所有框
 export const draw = (canvas: HTMLCanvasElement, boxes: AnchorBox[], activeIndex: number) => {
