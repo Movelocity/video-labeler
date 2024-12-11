@@ -2,7 +2,6 @@ import React, { useRef, useEffect, useState, useCallback, forwardRef, useImperat
 import { AnchorBox } from '@/lib/types'
 import { BoxesLayerProps, Point, type forwardHandler } from './boxes/types'
 import { pointCollidesBox, pointCollidesBoxCorner } from './boxes/utils'
-import { randomColor } from '@/lib/utils'
 import { draw } from './boxes/canvas'
 
 export type BoxesLayerHandle = forwardHandler;

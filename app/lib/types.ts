@@ -32,6 +32,7 @@ export interface TimelineEntry {
 }
 
 export interface LabelObject {
+  id: string;
   label: string;
   color: string;
   timeline: TimelineEntry;

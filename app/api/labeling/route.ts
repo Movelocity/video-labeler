@@ -2,48 +2,31 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { getConfig } from '../config';
+import { LabelDataV2, LabelObject, AnchorBox } from '@/lib/types';
+import { randomColor } from '@/lib/utils';
 
 export const runtime = "nodejs";
 
 const TIME_DIFF_THRESHOLD = 0.005;
 
-interface Box {
-  sx: number;
-  sy: number;
-  w: number;
-  h: number;
-  label: string;
-}
-
-interface Timeline {
-  [time: string]: Box;
-}
-
-interface LabelObject {
-  label: string;
-  timeline: Timeline;
-}
-
 interface LabelDataV1 {
   metadata: Record<string, any>;
-  labels: Record<string, Box[]>;
-}
-
-interface LabelDataV2 {
-  metadata: Record<string, any>;
-  labels?: Record<string, Box[]>; // Optional for backward compatibility
-  objects: LabelObject[];
-  version: 2;
+  labels: Record<string, AnchorBox[]>;
 }
 
 type LabelData = LabelDataV1 | LabelDataV2;
 
-// 检测是否为旧版标签文件
+/**检测是否为旧版标签文件*/
 const isLegacyFormat = (data: any): data is LabelDataV1 => {
   return !('version' in data) || !('objects' in data);
 };
 
-// 转换标签数据的函数
+/**自动生成id*/
+const autoIncrementId = (data: LabelData) => {
+  return (data.metadata.nextId = (data.metadata.nextId || 0) + 1).toString();
+}
+  
+/**转换标签数据, 返回新版本数据结构*/
 const transformLabels = (data: LabelDataV1): LabelDataV2 => {
   const labelGroups = new Map<string, LabelObject>();
 
@@ -55,7 +38,9 @@ const transformLabels = (data: LabelDataV1): LabelDataV2 => {
       
       if (!labelGroups.has(baseLabel)) {
         labelGroups.set(baseLabel, {
+          id: autoIncrementId(data),
           label: baseLabel,
+          color: randomColor(),
           timeline: {}
         });
       }
@@ -77,7 +62,7 @@ const transformLabels = (data: LabelDataV1): LabelDataV2 => {
   };
 };
 
-// 读取并自动迁移标签数据
+/**读取并自动迁移标签数据*/
 const readAndMigrateLabelData = (filePath: string): LabelDataV2 => {
   if (fs.existsSync(filePath)) {
     const fileContent = fs.readFileSync(filePath, 'utf-8');
@@ -101,7 +86,7 @@ const readAndMigrateLabelData = (filePath: string): LabelDataV2 => {
   };
 };
 
-// 获取标签文件路径的辅助函数
+/**获取标签文件路径的辅助函数*/
 const getLabelFilePath = (videoPath: string, labelFile: string | null): string => {
   const { VIDEO_ROOT, LABELS_ROOT } = getConfig();
   
@@ -113,7 +98,7 @@ const getLabelFilePath = (videoPath: string, labelFile: string | null): string =
   return path.join(cacheDirectory, `${path.basename(videoPath)}.json`);
 };
 
-// 确保缓存目录存在的辅助函数
+/**确保缓存目录存在的辅助函数*/
 const ensureCacheDirectory = (videoPath: string): void => {
   const { VIDEO_ROOT } = getConfig();
   const cacheDirectory = path.join(VIDEO_ROOT, path.dirname(videoPath), ".cache");
@@ -141,6 +126,7 @@ async function handleV2(req: NextRequest) {
   }
 }
 
+/**读取标签数据*/
 function handleReadV2(searchParams: URLSearchParams) {
   const videopath = searchParams.get('videopath') ?? "";
   const filePath = getLabelFilePath(videopath, searchParams.get('label_file'));
@@ -156,6 +142,7 @@ function handleReadV2(searchParams: URLSearchParams) {
   }
 }
 
+/**写入标签数据*/
 async function handleWriteV2(req: NextRequest, searchParams: URLSearchParams) {
   const { video_name, object_updates } = await req.json();
   const filePath = getLabelFilePath(video_name, searchParams.get('label_file'));
@@ -191,6 +178,7 @@ async function handleWriteV2(req: NextRequest, searchParams: URLSearchParams) {
   }
 }
 
+/**删除标签数据*/
 async function handleDeleteV2(req: NextRequest, searchParams: URLSearchParams) {
   const { video_name, label, time } = await req.json();
   const filePath = getLabelFilePath(video_name, searchParams.get('label_file'));
