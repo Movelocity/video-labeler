@@ -1,19 +1,19 @@
 'use client'
 // import { useParams } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
-import Player from './Player'
+import Player from '@/components/videoPlayer'
 import { MainContextProvider } from '@/common/context'
 import { Suspense } from 'react'
 
 function Video() {
   const searchParams = useSearchParams()
-  const filepath = searchParams.get('filepath')
-  const label_file = searchParams.get('label_file')
+  const filepath:string = searchParams.get('filepath') as string
+  const label_file:string = searchParams.get('label_file') as string
 
   return (
     <div className="w-full">
       <MainContextProvider>
-        <Player filepath={filepath as string} label_file={label_file as string}/>
+        <Player filepath={filepath} label_file={label_file}/>
       </MainContextProvider>
     </div>
   );

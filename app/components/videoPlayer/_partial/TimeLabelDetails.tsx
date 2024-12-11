@@ -1,5 +1,5 @@
 import { AnchorBox, LabelDataV2, LabelObject } from '@/common/types';
-import { second2time } from '../utils';
+import { second2time } from '@/lib/utils';
 import cn from 'classnames';
 
 type TimeLabelDetailsProps = {

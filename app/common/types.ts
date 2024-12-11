@@ -5,6 +5,7 @@ export interface AnchorBox {
   w: number
   h: number
   label: string
+  color?: string
 }
 
 export type FileInfo = {

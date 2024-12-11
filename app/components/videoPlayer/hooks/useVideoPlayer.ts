@@ -19,6 +19,10 @@ export const useVideoPlayer = (url: string) => {
     setVideoShapeRatio(videoElement.videoWidth / videoElement.videoHeight);
   }, []);
 
+  const handleEnded = useCallback(() => {
+    setPlaying(false);
+  }, []);
+
   const togglePlay = useCallback(() => {
     setPlaying(prev => !prev);
   }, []);
@@ -49,6 +53,7 @@ export const useVideoPlayer = (url: string) => {
     videoShapeRatio,
     handleProgress,
     handleReady,
+    handleEnded,
     togglePlay,
     seekTo,
     url,

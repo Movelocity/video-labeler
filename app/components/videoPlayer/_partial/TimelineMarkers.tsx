@@ -1,5 +1,5 @@
 import { AnchorBox, LabelDataV2 } from '@/common/types';
-import { second2time } from '../utils';
+import { second2time } from '@/lib/utils';
 
 type TimelineMarkersProps = {
   labelData: LabelDataV2;

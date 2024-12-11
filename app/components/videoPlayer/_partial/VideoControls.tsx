@@ -1,5 +1,5 @@
 import { FaPlay, FaPause, FaSave, FaTrash } from 'react-icons/fa';
-import { second2time } from '../utils';
+import { second2time } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 
 type VideoControlsProps = {
@@ -7,8 +7,8 @@ type VideoControlsProps = {
   duration: number;
   currentTime: number;
   onTogglePlay: () => void;
-  onSave: () => void;
-  onDelete: () => void;
+  onSave?: () => void;
+  onDelete?: () => void;
 };
 
 export const VideoControls = ({
@@ -45,7 +45,7 @@ export const VideoControls = ({
         {second2time(currentTime)} / {second2time(duration)}
       </div>
 
-      <div className='flex items-center space-x-2'>
+      {/* <div className='flex items-center space-x-2'>
         <button 
           className='flex items-center space-x-1 px-3 py-1.5 bg-zinc-600 hover:bg-zinc-500 rounded-md transition-colors'
           onClick={onSave}
@@ -63,7 +63,7 @@ export const VideoControls = ({
           <FaTrash className="w-4 h-4" />
           <span>删除帧标注</span>
         </button>
-      </div>
+      </div> */}
     </div>
   );
 }; 

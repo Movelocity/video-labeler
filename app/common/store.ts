@@ -1,7 +1,5 @@
 import { useContext } from 'react'
-import {
-  useStore as useZustandStore,
-} from 'zustand'
+import { useStore as useZustandStore } from 'zustand'
 import { createStore } from 'zustand/vanilla'
 import { MainContext } from './context'
 import { AnchorBox } from '@/common/types'

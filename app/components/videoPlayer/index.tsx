@@ -11,7 +11,7 @@ import { VideoControls } from '@/components/videoPlayer/_partial/VideoControls';
 import { AnchorBox, LabelDataV2, LabelObject } from '@/common/types';
 import { labelingService } from '@/service/labeling';
 import { videoService } from '@/service/video';
-import { second2time } from '@/components/videoPlayer/utils';
+import { second2time } from '@/lib/utils';
 import { TimeLabelDetails } from '@/components/videoPlayer/_partial/TimeLabelDetails';
 
 const time_diff_threshold = 0.005
@@ -142,7 +142,7 @@ const Player = (props: {filepath: string, label_file: string}) => {
   const deleteCurrentLabeling = useCallback(() => {
     console.log('delete current labeling');
     
-    // 获取当前时���点的所有标签
+    // 获取当前时间点的所有标签
     const currentBoxes = boxesLayerRef.current?.getBoxes() || [];
     const labelsToDelete = new Set(currentBoxes.map(box => box.label.replace(/_(开始|结束)$/, '')));
 
