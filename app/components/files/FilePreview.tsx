@@ -1,18 +1,23 @@
-import { useEffect, useState } from 'react';
-import { FileInfo } from '@/common/types';
+import { useEffect, useState, FC } from 'react';
+import { FileInfo } from '@/lib/types';
 import { FaFolder, FaFile } from 'react-icons/fa';
 import Link from 'next/link';
 import { fetchFiles } from '@/service/routing';
 
-export const FilePreview = (props: {dir: string}) => {
+interface FilePreviewProps {
+  root_dir: string;
+}
+
+export const FilePreview: FC<FilePreviewProps> = ({root_dir}) => {
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
+    console.log('FilePreview useEffect', root_dir);
     const loadFiles = async () => {
       try {
-        const data = await fetchFiles(props.dir);
+        const data = await fetchFiles(root_dir);
         setFiles(data);
       } catch (err) {
         setError('加载文件列表失败');
@@ -22,7 +27,7 @@ export const FilePreview = (props: {dir: string}) => {
     };
 
     loadFiles();
-  }, [props.dir]);
+  }, [root_dir]);
 
   if (loading) {
     return <div className="text-center py-4">加载中...</div>;
@@ -42,8 +47,8 @@ export const FilePreview = (props: {dir: string}) => {
         >
           详细页面
         </Link>
+        <span className="text-sm text-gray-50">{root_dir}</span>
       </div>
-      
 
       <div className="flex flex-row flex-wrap w-full">
         {files.map((file, index) => (
@@ -55,7 +60,6 @@ export const FilePreview = (props: {dir: string}) => {
           </div>
         ))}
       </div>
-      
     </div>
   );
 }; 

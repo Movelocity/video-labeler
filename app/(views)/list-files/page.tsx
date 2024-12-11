@@ -2,9 +2,9 @@
 import React from 'react'
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { type FileInfo } from '@/common/types'
+import { type FileInfo } from '@/lib/types'
 import { FaFolder, FaFile, FaFileVideo, FaSpinner } from 'react-icons/fa'
-import { isVideoFile } from '@/common/videos';
+import { isVideoFile } from '@/lib/videos';
 import cn from 'classnames';
 import { fetchFiles, getFileTarget, getParentDirectory } from '@/service/routing'
 
@@ -188,7 +188,7 @@ function ListFiles() {
   }
 
   return (
-    <div className="h-full w-full pb-8">
+    <div className="h-full w-full pb-8 pt-10">
       <div className="px-36 py-2 text-sm text-gray-200 border-b border-gray-500 flex items-center">
         <span className="text-gray-400 mr-2">
           路径: {directory || '根路径'}

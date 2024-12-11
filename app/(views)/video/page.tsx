@@ -2,7 +2,7 @@
 // import { useParams } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
 import Player from '@/components/videoPlayer'
-import { MainContextProvider } from '@/common/context'
+import { MainContextProvider } from '@/lib/context'
 import { Suspense } from 'react'
 
 function Video() {

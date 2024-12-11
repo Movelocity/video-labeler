@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle, memo } from 'react';
-import { AnchorBox } from '@/common/types'
+import { AnchorBox } from '@/lib/types'
 import { BoxesLayerProps, Point, type forwardHandler } from './boxes/types'
 import { randomColor, pointCollidesBox, pointCollidesBoxCorner } from './boxes/utils'
 import { draw } from './boxes/canvas'

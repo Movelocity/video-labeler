@@ -9,12 +9,12 @@ export interface AnchorBox {
 }
 
 export type FileInfo = {
-  name: string
-  label_file: string
-  labels: string[]
-  size: number | null
-  modified_time: string | null
-  type: string
+  name: string  // 文件名
+  label_file: string  // 标注文件路径
+  labels: string[]  // 标签集合
+  size?: number  // 文件大小
+  modified_time?: string  // 文件
+  type: 'file' | 'dir'  // 文件或文件夹
 }
 
 export type Shape = {

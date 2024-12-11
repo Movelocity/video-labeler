@@ -1,5 +1,5 @@
-import { type FileInfo } from '@/common/types'
-import { isVideoFile } from '@/common/videos'
+import { type FileInfo } from '@/lib/types'
+import { isVideoFile } from '@/lib/videos'
 /**
  * Fetch files from the specified directory
  */

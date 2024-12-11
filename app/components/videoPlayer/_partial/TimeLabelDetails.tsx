@@ -1,4 +1,4 @@
-import { AnchorBox, LabelDataV2, LabelObject } from '@/common/types';
+import { AnchorBox, LabelDataV2, LabelObject } from '@/lib/types';
 import { second2time } from '@/lib/utils';
 import cn from 'classnames';
 

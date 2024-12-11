@@ -3,8 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import { getConfig } from '../config';
 export const runtime = "nodejs";
-import { supportedExtensions } from '@/common/videos';
-import { type FileInfo } from '@/common/types'
+import { supportedExtensions } from '@/lib/videos';
+import { type FileInfo } from '@/lib/types'
 
 // 获取配置
 // const { VIDEO_ROOT, LABELS_ROOT } = getConfig();
@@ -108,8 +108,8 @@ export async function GET(req: NextRequest) {
       name: item,
       label_file: labelFileRelativePath,
       labels,
-      size: isFile ? fs.statSync(itemFullPath).size : null,
-      modified_time: isFile ? fs.statSync(itemFullPath).mtime.toISOString() : null,
+      size: isFile ? fs.statSync(itemFullPath).size : undefined,
+      modified_time: isFile ? fs.statSync(itemFullPath).mtime.toISOString() : undefined,
       type: isFile ? 'file' : 'dir'
     };
   });
