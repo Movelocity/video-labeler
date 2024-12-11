@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { fetchPathConfig, updatePathConfig, validatePath } from '@/service/routing';
 
 interface PathConfigProps {
@@ -16,7 +15,6 @@ export const PathConfig = ({ onSuccess, vidPathUpdater, show, onClose }: PathCon
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
     const loadConfig = async () => {
@@ -79,7 +77,7 @@ export const PathConfig = ({ onSuccess, vidPathUpdater, show, onClose }: PathCon
       
       onSuccess?.();
       onClose();
-      router.refresh();
+      window.location.reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : '更新失败');
     } finally {
