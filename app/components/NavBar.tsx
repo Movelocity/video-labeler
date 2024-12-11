@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { FaGear } from "react-icons/fa6";
-import { PathConfig } from '@/components/files/PathConfig';
+import { PathConfig } from '@/components/PathConfig';
 
 export default function NavBar() {
   const [showPathConfig, setShowPathConfig] = useState(false);

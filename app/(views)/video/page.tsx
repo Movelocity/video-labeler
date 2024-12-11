@@ -11,7 +11,7 @@ function Video() {
   const label_file:string = searchParams.get('label_file') as string
 
   return (
-    <div className="w-full">
+    <div className="w-full pt-16">
       <MainContextProvider>
         <Player filepath={filepath} label_file={label_file}/>
       </MainContextProvider>

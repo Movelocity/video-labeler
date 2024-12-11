@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import cn from 'classnames'
-import { useMainStore, useStore } from '@/common/store'
+import { useMainStore, useStore } from '@/lib/store'
 
 type DynamicInputsProps = {
   onSelectText: (text: string) => void

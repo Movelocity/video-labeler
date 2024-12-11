@@ -8,7 +8,7 @@ import { useVideoPlayer } from '@/components/videoPlayer/hooks/useVideoPlayer';
 import { useKeyboardShortcuts } from '@/components/videoPlayer/hooks/useKeyboardShortcuts';
 import { TimelineMarkers } from '@/components/videoPlayer/_partial/TimelineMarkers';
 import { VideoControls } from '@/components/videoPlayer/_partial/VideoControls';
-import { AnchorBox, LabelDataV2, LabelObject } from '@/common/types';
+import { AnchorBox, LabelDataV2, LabelObject } from '@/lib/types';
 import { labelingService } from '@/service/labeling';
 import { videoService } from '@/service/video';
 import { second2time } from '@/lib/utils';

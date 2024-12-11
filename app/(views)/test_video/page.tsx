@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useRef, useCallback, Suspense } from 'react';
+import { useEffect, useState, useRef, useCallback, Suspense, FC } from 'react';
 import ReactPlayer from 'react-player'
 import { useWindowDimensions } from '@/components/videoPlayer/hooks/useWindowDimensions';
 import { useVideoPlayer } from '@/components/videoPlayer/hooks/useVideoPlayer';
@@ -11,14 +11,20 @@ import VideoProgress from '@/components/videoPlayer/_partial/VideoProgress';
 
 const px = (n: number) => `${n}px`
 
-const Player = (props: {filepath: string, label_file: string}) => {
+interface PlayerProps {
+  video_file: string;
+  label_file: string;
+  canvas_layer?: React.ReactNode;
+}
+
+const Player: FC<PlayerProps> = ({video_file, label_file, canvas_layer}) => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const videoPlayer = useVideoPlayer(videoService.getVideoUrl(props.filepath, props.label_file));
+  const videoPlayer = useVideoPlayer(videoService.getVideoUrl(video_file, label_file));
 
   // 计算视频组件的尺寸
   const calculateVideoSize = useCallback(() => {
     const maxWidth = windowWidth * 0.7; // 视频最大宽度为窗口宽度的70%
-    const maxHeight = windowHeight * 0.7; // 视频最大高��为窗口高度的70%
+    const maxHeight = windowHeight * 0.7; // 视频最大高度为窗口高度的70%
     
     let videoWidth = maxWidth;
     let videoHeight = videoWidth / videoPlayer.videoShapeRatio;
@@ -62,7 +68,7 @@ const Player = (props: {filepath: string, label_file: string}) => {
       
       hasInit.current = true;
     }
-  }, [props.filepath]);
+  }, [video_file]);
 
   // Add keyboard shortcuts
   useKeyboardShortcuts({
@@ -104,6 +110,7 @@ const Player = (props: {filepath: string, label_file: string}) => {
               onEnded={videoPlayer.handleEnded}
             />
           }
+          {canvas_layer}
         </div>
 
         <VideoProgress
@@ -136,7 +143,7 @@ function Video() {
 
   return (
     <div className="w-full">
-        <Player filepath={filepath} label_file={label_file}/>
+        <Player video_file={filepath} label_file={label_file}/>
     </div>
   );
 }

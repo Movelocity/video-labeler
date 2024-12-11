@@ -1,8 +1,8 @@
 import { useEffect, useState, FC } from 'react';
 import { FileInfo } from '@/lib/types';
 import { FaFolder, FaFile } from 'react-icons/fa';
-import Link from 'next/link';
 import { fetchFiles } from '@/service/routing';
+import Link from 'next/link';
 
 interface FilePreviewProps {
   root_dir: string;
