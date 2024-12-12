@@ -34,7 +34,7 @@ const ObjectItem = ({
       )}
     >
       <div 
-        className="w-4 h-4 rounded-full cursor-pointer p-3 hover:filter hover:brightness-125"
+        className="w-4 h-4 rounded-full cursor-pointer p-3 hover:ring-2 hover:ring-sky-600"
         style={{ backgroundColor: isSelected? object.color : "#333" }}
         onClick={onSelect}
       />

@@ -1,10 +1,19 @@
 import React, { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle, memo } from 'react';
-import { AnchorBox } from '@/lib/types'
-import { BoxesLayerProps, Point, type forwardHandler } from './boxes/types'
-import { pointCollidesBox, pointCollidesBoxCorner } from './boxes/utils'
-import { draw } from './boxes/canvas'
+import { AnchorBox, Point } from '@/lib/types'
+import { pointCollidesBox, pointCollidesBoxCorner } from './utils'
+import { draw } from './draw'
 
-export type BoxesLayerHandle = forwardHandler;
+export type BoxesLayerHandle = {
+  getBoxes: () => AnchorBox[],
+  setBoxes: (boxes: AnchorBox[]) => void
+}
+
+export type BoxesLayerProps = {
+  width: number;
+  height: number;
+  className?: string;
+  labeltext?: string;
+} 
 
 const BoxesLayer = forwardRef(({
   width,

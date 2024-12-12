@@ -11,10 +11,10 @@ export const draw = (canvas: HTMLCanvasElement, boxes: AnchorBox[], activeIndex:
   const h = ctx.canvas.height
   ctx.clearRect(0, 0, w, h)
   
-  // 从后向前绘制，确保活动框在最上层
+  // 从后向前绘制，确保 active box 在最上层
   for(let idx=boxes.length-1; idx>=0; idx--){
     const box = boxes[idx]
-    ctx.lineWidth = idx === activeIndex? 3: 2
+    ctx.lineWidth = idx === activeIndex? 3: 2  // active box 的线宽为 3，其他框的线宽为 2
     ctx.strokeStyle = randomColor()
     ctx.strokeRect(box.sx * w, box.sy * h, box.w * w, box.h * h)
 

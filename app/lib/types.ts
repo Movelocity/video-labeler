@@ -1,4 +1,4 @@
-/** 数字全部采用小数 [0,1] */
+/** sx, sy, w, h label . 数字全部采用小数 [0,1] */
 export interface AnchorBox {
   sx: number
   sy: number
@@ -20,6 +20,11 @@ export type Shape = {
   w: number
   h: number
 }
+
+export type Point = {
+  x: number
+  y: number
+} 
 
 export interface LabelData {
   time: number;

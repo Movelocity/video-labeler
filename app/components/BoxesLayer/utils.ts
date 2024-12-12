@@ -1,10 +1,4 @@
-import { AnchorBox } from '@/lib/types'
-import { Point } from './types'
-
-// 生成随机HSL颜色
-export const randomColor = () => {
-  return `hsl(${Math.random() * 360}, 70%, 50%)`;
-}
+import { AnchorBox, Point } from '@/lib/types'
 
 // 检测点是否在框内，用于鼠标点击判断
 export const pointCollidesBox = (point: Point, boxes: AnchorBox[]): number => {
