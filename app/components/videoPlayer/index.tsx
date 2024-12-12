@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useRef, useCallback, memo } from 'react';
 import ReactPlayer from 'react-player'
-import BoxesLayer, { type BoxesLayerHandle } from '@/components/BoxesLayer';
+import BoxesLayer, { type BoxesLayerHandle } from '@/components/BoxesLayer/index';
 import DynamicInputs from '@/components/DynamicInputs';
 import { useWindowDimensions } from '@/components/videoPlayer/hooks/useWindowDimensions';
 import { useVideoPlayer } from '@/components/videoPlayer/hooks/useVideoPlayer';

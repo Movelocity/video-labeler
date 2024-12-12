@@ -6,15 +6,15 @@ import { useVideoPlayer } from '@/components/videoPlayer/hooks/useVideoPlayer';
 import { useKeyboardShortcuts } from '@/components/videoPlayer/hooks/useKeyboardShortcuts';
 import { VideoControls } from '@/components/videoPlayer/_partial/VideoControls';
 import { videoService } from '@/service/video';
-
+import { useLabelingStore } from '@/components/labeling/store/labelingStore';
 import VideoProgress from '@/components/videoPlayer/_partial/VideoProgress';
+import { CanvasLayer } from '@/components/BoxesLayer/CanvasLayer';
 
 const px = (n: number) => `${n}px`
 
 interface PlayerProps {
   video_file: string;
   label_file: string;
-  canvas_layer?: React.ReactNode;
 }
 
 export interface VidPlayerHandle {
@@ -23,9 +23,10 @@ export interface VidPlayerHandle {
   getDuration: () => number;
 }
 
-export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_file, label_file, canvas_layer}, ref) => {
+export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_file, label_file}, ref) => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const videoPlayer = useVideoPlayer(videoService.getVideoUrl(video_file, label_file));
+  const { setVideoProgress } = useLabelingStore()
 
   // 计算视频组件的尺寸
   const calculateVideoSize = useCallback(() => {
@@ -130,7 +131,10 @@ export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_file, 
               onEnded={videoPlayer.handleEnded}
             />
           }
-          {canvas_layer}
+          <CanvasLayer
+            width={videoSize.width}
+            height={videoSize.height}
+          />
         </div>
 
         <VideoProgress
@@ -143,6 +147,7 @@ export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_file, 
             if(videoPlayer.playing) {
               videoPlayer.togglePlay();
             }
+            setVideoProgress(progress)
           }}
         />
         <VideoControls 

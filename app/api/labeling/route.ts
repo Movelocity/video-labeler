@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { getConfig } from '../config';
 import { LabelDataV2, LabelObject, AnchorBox } from '@/lib/types';
-import { randomColor } from '@/lib/utils';
+import { randomColor, safeTimeKey } from '@/lib/utils';
 
 export const runtime = "nodejs";
 
@@ -26,7 +26,7 @@ const autoIncrementId = (data: LabelData) => {
   return (data.metadata.nextId = (data.metadata.nextId || 0) + 1).toString();
 }
   
-/**转换标签数据, 返回新版本数据结构*/
+/** 转换标签数据, 输入旧数据结构，返回新版本数据结构，新版兼容旧版 */
 const transformLabels = (data: LabelDataV1): LabelDataV2 => {
   const labelGroups = new Map<string, LabelObject>();
 
@@ -46,7 +46,7 @@ const transformLabels = (data: LabelDataV1): LabelDataV2 => {
       }
 
       const labelObject = labelGroups.get(baseLabel)!;
-      labelObject.timeline[time] = box;
+      labelObject.timeline[safeTimeKey(time)] = box;
     });
   });
 

@@ -9,9 +9,9 @@ interface KeyFrameViewerProps {
 }
 
 export const KeyFrameViewer = ({ className, jump_to_frame }: KeyFrameViewerProps) => {
-  const activeObjectData = useLabelingStore(state => state.getActiveObjectData());
+  const activeObjIdData = useLabelingStore(state => state.getactiveObjIdData());
 
-  if (!activeObjectData) {
+  if (!activeObjIdData) {
     return (
       <div className={cn("bg-slate-800/50 p-4 rounded-lg", className)}>
         <div className="text-slate-400 text-center">
@@ -23,7 +23,7 @@ export const KeyFrameViewer = ({ className, jump_to_frame }: KeyFrameViewerProps
 
   const handleKeyFrameClick = (frame: string) => {
     jump_to_frame && jump_to_frame(parseFloat(frame));
-    // console.log('Selected frame:', frame, 'Data:', activeObjectData.timeline[frame]);
+    // console.log('Selected frame:', frame, 'Data:', activeObjIdData.timeline[frame]);
   };
 
   return (
@@ -33,16 +33,16 @@ export const KeyFrameViewer = ({ className, jump_to_frame }: KeyFrameViewerProps
           关键帧列表
         </span>
         <span className="text-slate-200 text-sm">
-          {activeObjectData.label}
+          {activeObjIdData.label}
         </span>
       </span>
       <div className="flex flex-wrap gap-2 max-h-[300px] overflow-y-scroll pt-2">
-        {Object.entries(activeObjectData.timeline).map(([frame, data]) => (
+        {Object.entries(activeObjIdData.timeline).map(([frame, data]) => (
           <button
             key={frame}
             onClick={() => handleKeyFrameClick(frame)}
             className="px-3 py-1.5 rounded text-sm hover:bg-slate-700 transition-colors"
-            style={{ backgroundColor: `${activeObjectData.color || randomColor()}20`, color: activeObjectData.color || randomColor() }}
+            style={{ backgroundColor: `${activeObjIdData.color || randomColor()}20`, color: activeObjIdData.color || randomColor() }}
           >
             帧 {frame}
           </button>
