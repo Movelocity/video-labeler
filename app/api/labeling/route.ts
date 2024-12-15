@@ -61,7 +61,7 @@ const transformLabels = (data: LabelDataV1): LabelDataV2 => {
   };
 };
 
-/**读取并自动迁移标签数据*/
+/**读取标签数据，遇到旧版标签文件则自动迁移数据格式*/
 const readAndMigrateLabelData = (filePath: string): LabelDataV2 => {
   if (fs.existsSync(filePath)) {
     const fileContent = fs.readFileSync(filePath, 'utf-8');
@@ -143,12 +143,13 @@ function handleReadV2(searchParams: URLSearchParams) {
 
 /**写入标签数据*/
 async function handleWriteV2(req: NextRequest, searchParams: URLSearchParams) {
-  const { video_name, object_updates } = await req.json();
-  const filePath = getLabelFilePath(video_name, searchParams.get('label_path'));
+  const object_updates = await req.json();
+  const video_path = searchParams.get('video_path') ?? "";
+  const labelFilePath = getLabelFilePath(video_path, searchParams.get('label_path'));
 
   try {
-    ensureCacheDirectory(video_name);
-    const data = readAndMigrateLabelData(filePath);
+    ensureCacheDirectory(video_path);
+    const data = readAndMigrateLabelData(labelFilePath);
     
     // 更新或添加对象
     object_updates.forEach((update: LabelObject) => {
@@ -164,7 +165,7 @@ async function handleWriteV2(req: NextRequest, searchParams: URLSearchParams) {
       }
     });
     
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+    fs.writeFileSync(labelFilePath, JSON.stringify(data, null, 2));
     return NextResponse.json(
       { message: 'Labels saved successfully' }, 
       { status: 200 }
@@ -179,15 +180,18 @@ async function handleWriteV2(req: NextRequest, searchParams: URLSearchParams) {
 
 /**删除标签数据*/
 async function handleDeleteV2(req: NextRequest, searchParams: URLSearchParams) {
-  const { video_name, label, time } = await req.json();
-  const filePath = getLabelFilePath(video_name, searchParams.get('label_path'));
+  const video_path = searchParams.get('video_path') ?? "";
+  const obj_id = searchParams.get('obj_id') ?? "";
+  const timePoint = searchParams.get('time') ?? "";
+  
+  const filePath = getLabelFilePath(video_path, searchParams.get('label_path'));
 
   try {
     const data = readAndMigrateLabelData(filePath);
-    const timeToDelete = parseFloat(time);
+    const timeToDelete = parseFloat(timePoint);
 
     // 查找对应的对象
-    const targetObject = data.objects.find(obj => obj.label === label);
+    const targetObject = data.objects.find(obj => obj.id === obj_id);
     if (targetObject) {
       // 删除时间点附近的标签
       Object.keys(targetObject.timeline).forEach(t => {
@@ -199,7 +203,7 @@ async function handleDeleteV2(req: NextRequest, searchParams: URLSearchParams) {
 
       // 如果对象没有任何时间点了，则删除整个对象
       if (Object.keys(targetObject.timeline).length === 0) {
-        data.objects = data.objects.filter(obj => obj.label !== label);
+        data.objects = data.objects.filter(obj => obj.label !== obj_id);
       }
     }
 

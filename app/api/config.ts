@@ -6,7 +6,7 @@ const runtimeConfig = {
   LABELS_ROOT: process.env.LABELS_ROOT ?? (process.env.VIDEO_ROOT ?? "videos")
 };
 
-// 获取配置，返回运行时状态
+// 获取配置，返回 runtime state
 export const getConfig = () => runtimeConfig;
 
 // 更新配置，同时更新运行时状态

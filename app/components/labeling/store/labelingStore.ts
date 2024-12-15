@@ -7,12 +7,14 @@ import { safeTimeKey } from '@/lib/utils';
 import { TIME_DIFF_THRESHOLD } from '@/lib/constants';
 
 interface LabelingState {
+  video_path: string;
   labelData: LabelDataV2 | undefined;
   selectedIds: string[];  // 选中的对象的 id 列表
   activeObjId: string | null;  // 当前选中的对象的 id
   videoProgress: number;  // 当前时间
   
   // Actions
+  setVideoPath: (path: string) => void;
   setLabelData: (data: LabelDataV2) => void;
   toggleObjectSelection: (objId: string) => void;
   setactiveObjId: (objId: string | null) => void;
@@ -27,12 +29,14 @@ interface LabelingState {
 /** 标签数据全局存储 */
 export const useLabelingStore = create<LabelingState>((set, get) => ({
   labelData: undefined,
+  video_path: '',
   selectedIds: [],
   activeObjId: null,
   videoProgress: 0,
 
   // Actions
   /** 设置标签数据 */
+  setVideoPath: (path) => set({ video_path: path }),
   setLabelData: (data) => set({ labelData: data }),
   
   /** 切换对象选择状态 */
@@ -61,8 +65,9 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
   
   /** 加载标签数据 */
   loadLabelData: async (label_path) => {
+    const { video_path } = get();
     try {
-      const data = await labelingService.readLabelsV2('', label_path);
+      const data = await labelingService.readLabelsV2(video_path, label_path);
       if (data) set({ labelData: data });
     } catch (error) {
       console.error('Error reading labels:', error);
