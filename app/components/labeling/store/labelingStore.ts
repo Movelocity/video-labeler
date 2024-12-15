@@ -8,11 +8,19 @@ interface LabelingState {
   video_path: string;
   label_path: string;
   labelData: LabelDataV2 | undefined;
+  selectedIds: string[];
+  activeObjId: string | null;
+  videoProgress: number;
   
   // Basic setters
   setLabelPath: (path: string) => void;
   setVideoPath: (path: string) => void;
   setLabelData: (data: LabelDataV2) => void;
+  setVideoProgress: (progress: number) => void;
+  
+  // Selection operations
+  toggleObjectSelection: (objId: string) => void;
+  setActiveObjId: (objId: string | null) => void;
   
   // Core data operations
   loadLabelData: (label_path: string) => Promise<void>;
@@ -27,11 +35,32 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
   labelData: undefined,
   video_path: '',
   label_path: '',
+  selectedIds: [],
+  activeObjId: null,
+  videoProgress: 0,
 
   // Basic setters
   setVideoPath: (path) => set({ video_path: path }),
   setLabelPath: (path) => set({ label_path: path }),
   setLabelData: (data) => set({ labelData: data }),
+  setVideoProgress: (progress) => set({ videoProgress: progress }),
+  
+  // Selection operations
+  toggleObjectSelection: (objId) => {
+    const { selectedIds, activeObjId } = get();
+    const newSelectedIds = selectedIds.includes(objId)
+      ? selectedIds.filter(id => id !== objId)
+      : [...selectedIds, objId];
+
+    set({
+      selectedIds: newSelectedIds,
+      activeObjId: activeObjId === objId && !newSelectedIds.includes(objId)
+        ? null
+        : (!activeObjId && newSelectedIds.includes(objId) ? objId : activeObjId)
+    });
+  },
+  
+  setActiveObjId: (objId) => set({ activeObjId: objId }),
   
   // Core data operations
   loadLabelData: async (label_path) => {
