@@ -7,13 +7,13 @@ export const runtime = "nodejs"
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams
-  const filepath = searchParams.get('filepath')
+  const video_file = searchParams.get('video_file')
   // const label_file = searchParams.get('label_file')
-  if(!filepath || typeof filepath != typeof "") {
+  if(!video_file || typeof video_file != typeof "") {
     return NextResponse.json({msg: "请输入有效的 searchParam"}, {status: 404})
   }
   const { VIDEO_ROOT } = getConfig();
-  const absFilePath = path.join(VIDEO_ROOT, filepath as string)
+  const absFilePath = path.join(VIDEO_ROOT, video_file as string)
   console.log(absFilePath)
   // const filePath = "G:/pico_vid/survival/camp.mp4";
 
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   const stat = fs.statSync(absFilePath);
   const fileSize = stat.size;
   const range = req.headers.get('range');
-  const contentType = "video/"+path.extname(filepath);
+  const contentType = "video/"+path.extname(video_file);
 
   if (range) {
     const parts = range.replace(/bytes=/, "").split("-");

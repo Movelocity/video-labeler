@@ -72,7 +72,6 @@ export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_file, 
     if (typeof window !== "undefined" && !hasInit.current) {
       console.log('init')
       setHasWindow(true);
-      
       hasInit.current = true;
     }
   }, [video_file]);
@@ -91,9 +90,11 @@ export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_file, 
     const interval = setInterval(() => {
       const player = videoPlayer.playerRef.current?.getInternalPlayer() as HTMLVideoElement;
       if (player) {
-        setActiveProgress(player.currentTime / player.duration);
+        const progressInRatio = player.currentTime / player.duration;
+        setActiveProgress(progressInRatio);
+        setVideoProgress(progressInRatio)
       }
-    }, 30); // 刷新间隔
+    }, 30); // 刷新间隔 ms
 
     return () => clearInterval(interval);
   }, [videoPlayer.playing]);
@@ -102,6 +103,7 @@ export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_file, 
   useImperativeHandle(ref, () => ({
     seekTo: (fraction: number) => {
       updateProgressView(fraction);
+      setVideoProgress(fraction)
     },
     getCurrentTime: () => {
       const player = videoPlayer.playerRef.current?.getInternalPlayer() as HTMLVideoElement;

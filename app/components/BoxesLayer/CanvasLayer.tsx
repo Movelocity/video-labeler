@@ -40,7 +40,7 @@ export const CanvasLayer = ({
 
   useEffect(()=> {
     const boxes = getCurrentBoxes()
-    console.log('getCurrentBoxes:', boxes)
+    // console.log('getCurrentBoxes:', boxes)
     boxesRef.current = boxes
     refresh()
   }, [videoProgress])

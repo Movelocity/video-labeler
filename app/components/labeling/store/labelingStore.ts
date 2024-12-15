@@ -56,7 +56,7 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
   /** 设置当前对象 */
   setactiveObjId: (objId) => set({ activeObjId: objId }),
   
-  /** 设置当前时间 */
+  /** 设置当前时间 0~1 */
   setVideoProgress: (time) => set({ videoProgress: time }),
   
   /** 加载标签数据 */

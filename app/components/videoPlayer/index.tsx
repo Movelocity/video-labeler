@@ -16,9 +16,9 @@ import { TimeLabelDetails } from '@/components/videoPlayer/_partial/TimeLabelDet
 import { TIME_DIFF_THRESHOLD } from '@/lib/constants';
 const px = (n: number) => `${n}px`
 
-const Player = (props: {filepath: string, label_file: string}) => {
+const Player = (props: {video_file: string, label_file: string}) => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const videoPlayer = useVideoPlayer(videoService.getVideoUrl(props.filepath, props.label_file));
+  const videoPlayer = useVideoPlayer(videoService.getVideoUrl(props.video_file, props.label_file));
   const [labelText, setLabelText] = useState('');
   const boxesLayerRef = useRef<BoxesLayerHandle>(null);
   
@@ -73,7 +73,7 @@ const Player = (props: {filepath: string, label_file: string}) => {
       console.log('init')
       setHasWindow(true);
       // - 更新中
-      // labelingService.readLabelsV2(props.filepath, props.label_file)
+      // labelingService.readLabelsV2(props.video_file, props.label_file)
       //   .then(data => {
       //     setLabelData(data);
       //   })
@@ -82,7 +82,7 @@ const Player = (props: {filepath: string, label_file: string}) => {
       //   });
       hasInit.current = true;
     }
-  }, [props.filepath, props.label_file]);
+  }, [props.video_file, props.label_file]);
 
   const saveCurrentLabeling = useCallback(() => {
     console.log('save current labeling')
@@ -133,10 +133,10 @@ const Player = (props: {filepath: string, label_file: string}) => {
 
     // 保存到服务器 - 更新中
     // labelingService.saveLabelingV2({
-    //   video_name: props.filepath,
+    //   video_name: props.video_file,
     //   object_updates
     // }, props.label_file);
-  }, [activeProgress, boxesLayerRef.current?.getBoxes(), props.filepath, props.label_file]);
+  }, [activeProgress, boxesLayerRef.current?.getBoxes(), props.video_file, props.label_file]);
   
   const deleteCurrentLabeling = useCallback(() => {
     console.log('delete current labeling');
@@ -170,14 +170,14 @@ const Player = (props: {filepath: string, label_file: string}) => {
     // 删除服务器数据
     Promise.all(Array.from(labelsToDelete).map(label =>
       labelingService.deleteLabelingV2({
-        video_name: props.filepath,
+        video_name: props.video_file,
         label,
         time: activeProgress
       }, props.label_file)
     ));
 
     boxesLayerRef.current?.setBoxes([]);
-  }, [activeProgress, props.filepath, props.label_file]);
+  }, [activeProgress, props.video_file, props.label_file]);
 
   // Add keyboard shortcuts
   useKeyboardShortcuts({
