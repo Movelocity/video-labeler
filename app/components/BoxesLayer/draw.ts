@@ -6,7 +6,6 @@ export const draw = (canvas: HTMLCanvasElement, boxes: AnchorBox[], activeIndex:
   if(!canvas) return
   const ctx = canvas.getContext('2d')
   if(!ctx) return
-  
   const w = ctx.canvas.width
   const h = ctx.canvas.height
   ctx.clearRect(0, 0, w, h)
@@ -15,7 +14,7 @@ export const draw = (canvas: HTMLCanvasElement, boxes: AnchorBox[], activeIndex:
   for(let idx=boxes.length-1; idx>=0; idx--){
     const box = boxes[idx]
     ctx.lineWidth = idx === activeIndex? 3: 2  // active box 的线宽为 3，其他框的线宽为 2
-    ctx.strokeStyle = randomColor()
+    ctx.strokeStyle = box.color??randomColor()
     ctx.strokeRect(box.sx * w, box.sy * h, box.w * w, box.h * h)
 
     // 绘制标签
@@ -25,7 +24,7 @@ export const draw = (canvas: HTMLCanvasElement, boxes: AnchorBox[], activeIndex:
     const textX = box.sx * w
     const textY = box.sy * h
     
-    ctx.fillStyle = randomColor();
+    ctx.fillStyle = box.color??randomColor();
     ctx.fillRect(textX-1, textY - textHeight, textWidth+8, textHeight)
 
     ctx.fillStyle = 'white';

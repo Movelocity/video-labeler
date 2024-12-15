@@ -13,8 +13,7 @@ import { labelingService } from '@/service/labeling';
 import { videoService } from '@/service/video';
 import { second2time } from '@/lib/utils';
 import { TimeLabelDetails } from '@/components/videoPlayer/_partial/TimeLabelDetails';
-
-const time_diff_threshold = 0.005
+import { TIME_DIFF_THRESHOLD } from '@/lib/constants';
 const px = (n: number) => `${n}px`
 
 const Player = (props: {filepath: string, label_file: string}) => {
@@ -153,7 +152,7 @@ const Player = (props: {filepath: string, label_file: string}) => {
           // 删除该时间点的标注
           const newTimeline = { ...obj.timeline };
           Object.keys(newTimeline).forEach(time => {
-            if (Math.abs(parseFloat(time) - activeProgress) < time_diff_threshold) {
+            if (Math.abs(parseFloat(time) - activeProgress) < TIME_DIFF_THRESHOLD) {
               delete newTimeline[time];
             }
           });

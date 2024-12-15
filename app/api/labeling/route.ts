@@ -4,10 +4,9 @@ import path from 'path';
 import { getConfig } from '../config';
 import { LabelDataV2, LabelObject, AnchorBox } from '@/lib/types';
 import { randomColor, safeTimeKey } from '@/lib/utils';
+import { TIME_DIFF_THRESHOLD } from '@/lib/constants';
 
 export const runtime = "nodejs";
-
-const TIME_DIFF_THRESHOLD = 0.005;
 
 interface LabelDataV1 {
   metadata: Record<string, any>;

@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { LabelDataV2, AnchorBox, LabelObject } from '@/lib/types';
 import { labelingService } from '@/service/labeling';
 import { safeTimeKey } from '@/lib/utils';
+import { TIME_DIFF_THRESHOLD } from '@/lib/constants';
 
 interface LabelingState {
   labelData: LabelDataV2 | undefined;
@@ -86,12 +87,12 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
     
     // 遍历选中的对象
     selectedIds.forEach(id => {
-      const object = labelData.objects.find(obj => obj.id === id);
-      if (!object) return;
+      const the_object = labelData.objects.find(obj => obj.id === id);
+      if (!the_object) return;
       // console.log('id', id, object.timeline)
   
       // 获取对象的所有关键帧时间点
-      const timePoints = Object.keys(object.timeline)
+      const timePoints = Object.keys(the_object.timeline)
         .map(t => parseFloat(t))
         .sort((a, b) => a - b);
 
@@ -108,8 +109,8 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
       if (startIdx !== -1) {
         const t1 = timePoints[startIdx];
         const t2 = timePoints[startIdx + 1];
-        const box1 = object.timeline[safeTimeKey(t1)];
-        const box2 = object.timeline[safeTimeKey(t2)];
+        const box1 = the_object.timeline[safeTimeKey(t1)];
+        const box2 = the_object.timeline[safeTimeKey(t2)];
         // console.log('t1', t1, 'box1', box1)
         // console.log('t2', t2, 'box2', box2)
 
@@ -122,14 +123,15 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
           h: box1.h + (box2.h - box1.h) * ratio,
           label: box1.label
         };
+        interpolatedBox.color = the_object.color;
 
         boxes.push(interpolatedBox);
       }
       // 如果当前时间正好等于某个关键帧时间点
       else {
-        const exactTimePoint = timePoints.find(t => Math.abs(t - videoProgress) < 0.001);
+        const exactTimePoint = timePoints.find(t => Math.abs(t - videoProgress) < TIME_DIFF_THRESHOLD);
         if (exactTimePoint !== undefined) {
-          boxes.push(object.timeline[safeTimeKey(exactTimePoint)]);
+          boxes.push(the_object.timeline[safeTimeKey(exactTimePoint)]);
         }
       }
     });
