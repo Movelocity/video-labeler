@@ -8,12 +8,14 @@ import { TIME_DIFF_THRESHOLD } from '@/lib/constants';
 
 interface LabelingState {
   video_path: string;
+  label_path: string;
   labelData: LabelDataV2 | undefined;
   selectedIds: string[];  // 选中的对象的 id 列表
   activeObjId: string | null;  // 当前选中的对象的 id
   videoProgress: number;  // 当前时间
   
   // Actions
+  setLabelPath: (path: string) => void;
   setVideoPath: (path: string) => void;
   setLabelData: (data: LabelDataV2) => void;
   toggleObjectSelection: (objId: string) => void;
@@ -23,13 +25,19 @@ interface LabelingState {
   
   // Computed
   getCurrentBoxes: () => AnchorBox[];
-  getactiveObjIdData: () => LabelObject | undefined;
+  getactiveObjData: () => LabelObject | undefined;
+
+  addObject: (obj: LabelObject) => Promise<void>,
+  deleteObject: (objId: string) => Promise<void>,
+  addKeyFrame: (objId: string, time: number, box: AnchorBox) => Promise<void>,
+  deleteKeyFrame: (objId: string, time: number) => Promise<void>,
 }
 
 /** 标签数据全局存储 */
 export const useLabelingStore = create<LabelingState>((set, get) => ({
   labelData: undefined,
   video_path: '',
+  label_path: '',
   selectedIds: [],
   activeObjId: null,
   videoProgress: 0,
@@ -37,6 +45,7 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
   // Actions
   /** 设置标签数据 */
   setVideoPath: (path) => set({ video_path: path }),
+  setLabelPath: (path) => set({ label_path: path }),
   setLabelData: (data) => set({ labelData: data }),
   
   /** 切换对象选择状态 */
@@ -75,7 +84,7 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
   },
 
   /** 获取当前对象数据 */
-  getactiveObjIdData: () => {
+  getactiveObjData: () => {
     const { labelData, activeObjId } = get();
     if (!labelData || !activeObjId) return undefined;
     return labelData.objects.find(obj => obj.id === activeObjId);
@@ -142,5 +151,141 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
     });
 
     return boxes;
+  },
+
+  /** 添加新对象 */
+  addObject: async (obj: LabelObject) => {
+    const { labelData, video_path } = get();
+    if (!labelData) return;
+
+    const newLabelData = {
+      ...labelData,
+      objects: [...labelData.objects, obj]
+    };
+
+    // 更新本地状态
+    set({ labelData: newLabelData });
+
+    // 保存到服务器
+    try {
+      await labelingService.saveLabelingV2(video_path, [obj]);
+    } catch (error) {
+      console.error('Error saving new object:', error);
+      // 如果保存失败，回滚状态
+      set({ labelData });
+    }
+  },
+
+  /** 删除对象 */
+  deleteObject: async (objId: string) => {
+    const { labelData, video_path, selectedIds, activeObjId } = get();
+    if (!labelData) return;
+
+    const objectToDelete = labelData.objects.find(obj => obj.id === objId);
+    if (!objectToDelete) return;
+
+    const newLabelData = {
+      ...labelData,
+      objects: labelData.objects.filter(obj => obj.id !== objId)
+    };
+
+    // 更新本地状态
+    const newSelectedIds = selectedIds.filter(id => id !== objId);
+    const newActiveObjId = activeObjId === objId ? null : activeObjId;
+    
+    set({ 
+      labelData: newLabelData,
+      selectedIds: newSelectedIds,
+      activeObjId: newActiveObjId
+    });
+
+    // 保存到服务器
+    try {
+      // 遍历对象的所有时间点并删除
+      const timePoints = Object.keys(objectToDelete.timeline).map(t => parseFloat(t));
+      for (const time of timePoints) {
+        await labelingService.deleteLabelingV2(video_path, objId, time);
+      }
+    } catch (error) {
+      console.error('Error deleting object:', error);
+      // 如果删除失败，回滚状态
+      set({ 
+        labelData,
+        selectedIds,
+        activeObjId
+      });
+    }
+  },
+
+  /** 添加关键帧 */
+  addKeyFrame: async (objId: string, time: number, box: AnchorBox) => {
+    const { labelData, video_path } = get();
+    if (!labelData) return;
+
+    const objectToUpdate = labelData.objects.find(obj => obj.id === objId);
+    if (!objectToUpdate) return;
+
+    const updatedObject = {
+      ...objectToUpdate,
+      timeline: {
+        ...objectToUpdate.timeline,
+        [safeTimeKey(time)]: box
+      }
+    };
+
+    const newLabelData = {
+      ...labelData,
+      objects: labelData.objects.map(obj => 
+        obj.id === objId ? updatedObject : obj
+      )
+    };
+
+    // 更新本地状态
+    set({ labelData: newLabelData });
+
+    // 保存到服务器
+    try {
+      await labelingService.saveLabelingV2(video_path, [updatedObject]);
+    } catch (error) {
+      console.error('Error adding keyframe:', error);
+      // 如果保存失败，回滚状态
+      set({ labelData });
+    }
+  },
+
+  /** 删除关键帧 */
+  deleteKeyFrame: async (objId: string, time: number) => {
+    const { labelData, video_path } = get();
+    if (!labelData) return;
+
+    const objectToUpdate = labelData.objects.find(obj => obj.id === objId);
+    if (!objectToUpdate) return;
+
+    // 创建新的 timeline，排除要删除的时间点
+    const { [safeTimeKey(time)]: _, ...remainingTimeline } = objectToUpdate.timeline;
+
+    const updatedObject = {
+      ...objectToUpdate,
+      timeline: remainingTimeline
+    };
+
+    const newLabelData = {
+      ...labelData,
+      objects: labelData.objects.map(obj => 
+        obj.id === objId ? updatedObject : obj
+      )
+    };
+
+    // 更新本地状态
+    set({ labelData: newLabelData });
+
+    // 保存到服务器
+    try {
+      await labelingService.deleteLabelingV2(video_path, objId, time);
+    } catch (error) {
+      console.error('Error deleting keyframe:', error);
+      // 如果删除失败，回滚状态
+      set({ labelData });
+    }
   },
 })); 

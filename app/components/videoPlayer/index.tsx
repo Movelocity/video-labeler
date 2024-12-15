@@ -133,7 +133,7 @@ const Player = (props: {video_path: string, label_path: string}) => {
 
     // 保存到服务器 - 更新中
     // labelingService.saveLabelingV2({
-    //   video_name: props.video_path,
+    //   video_path: props.video_path,
     //   object_updates
     // }, props.label_path);
   }, [activeProgress, boxesLayerRef.current?.getBoxes(), props.video_path, props.label_path]);
@@ -170,7 +170,7 @@ const Player = (props: {video_path: string, label_path: string}) => {
     // 删除服务器数据
     Promise.all(Array.from(labelsToDelete).map(label =>
       labelingService.deleteLabelingV2({
-        video_name: props.video_path,
+        video_path: props.video_path,
         label,
         time: activeProgress
       }, props.label_path)

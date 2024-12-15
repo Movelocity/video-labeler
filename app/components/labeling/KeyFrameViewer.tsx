@@ -9,7 +9,7 @@ interface KeyFrameViewerProps {
 }
 
 export const KeyFrameViewer = ({ className, jump_to_frame }: KeyFrameViewerProps) => {
-  const activeObjIdData = useLabelingStore(state => state.getactiveObjIdData());
+  const activeObjIdData = useLabelingStore(state => state.getactiveObjData());
 
   if (!activeObjIdData) {
     return (

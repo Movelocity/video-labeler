@@ -1,7 +1,7 @@
 import { LabelData, AnchorBox, LabelDataV2 } from '@/lib/types';
 
 interface SaveLabelingParams {
-  video_name: string;
+  video_path: string;
   boxes: AnchorBox[];
   time: number;
 }
@@ -13,24 +13,6 @@ interface TimelineEntry {
 interface LabelObject {
   label: string;
   timeline: TimelineEntry;
-}
-
-// interface LabelDataV2 {
-//   metadata: Record<string, any>;
-//   labels?: Record<string, AnchorBox[]>;
-//   objects: LabelObject[];
-//   version: 2;
-// }
-
-interface SaveLabelingV2Params {
-  video_name: string;
-  object_updates: LabelObject[];
-}
-
-interface DeleteLabelingV2Params {
-  video_name: string;
-  label: string;
-  time: number;
 }
 
 /** 标注服务 */
@@ -51,7 +33,7 @@ export const labelingService = {
   },
 
   async saveLabeling(params: SaveLabelingParams, label_path: string): Promise<void> {
-    await fetch(`/api/labeling?action=write&video_path=${params.video_name}&label_path=${label_path}`, {
+    await fetch(`/api/labeling?action=write&video_path=${params.video_path}&label_path=${label_path}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -70,8 +52,8 @@ export const labelingService = {
   },
 
   // V2 API 新接口
-  async readLabelsV2(video_path: string, label_path: string): Promise<LabelDataV2> {
-    const response = await fetch(`/api/labeling?action=read&video_path=${video_path}&label_path=${label_path}`, {
+  async readLabelsV2(video_path: string, label_path?: string): Promise<LabelDataV2> {
+    const response = await fetch(`/api/labeling?action=read&video_path=${video_path}&label_path=${label_path || ''}`, {
       method: 'GET'
     });
     const data = await response.json();
@@ -83,23 +65,20 @@ export const labelingService = {
     return data;
   },
 
-  async saveLabelingV2(params: SaveLabelingV2Params, label_path: string): Promise<void> {
-    await fetch(`/api/labeling?action=write&video_path=${params.video_name}&label_path=${label_path}`, {
+  /** 保存标注框信息 */
+  async saveLabelingV2(video_path: string, object_updates: LabelObject[], label_path?: string): Promise<void> {
+    await fetch(`/api/labeling?action=write&video_path=${video_path}&label_path=${label_path || ''}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(params)
+      body: JSON.stringify(object_updates)
     });
   },
 
-  async deleteLabelingV2(params: DeleteLabelingV2Params, label_path: string): Promise<void> {
-    await fetch(`/api/labeling?action=delete&video_path=${params.video_name}&label_path=${label_path}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(params)
+  async deleteLabelingV2(video_path: string, obj_id: string, time: number, label_path?: string): Promise<void> {
+    await fetch(`/api/labeling?action=delete&video_path=${video_path}&obj_id=${obj_id}&time=${time}&label_path=${label_path || ''}`, {
+      method: 'DELETE'
     });
   },
 

@@ -152,15 +152,15 @@ export const CanvasLayer = ({
     isResizing.current = false
     setCursor('default')
 
-    if (tgBoxIdx.current !== -1) {  // 框的尺寸过小则移除
-      const box = boxesRef.current[tgBoxIdx.current]
-      if(!box) return;
-      if(box.w < 0.02 && box.h < 0.04){
-        boxesRef.current.splice(tgBoxIdx.current, 1)
-        tgBoxIdx.current = -1
-      }
-      refresh()
-    }
+    // if (tgBoxIdx.current !== -1) {  // 框的尺寸过小则移除
+    //   const box = boxesRef.current[tgBoxIdx.current]
+    //   if(!box) return;
+    //   if(box.w < 0.02 && box.h < 0.04){
+    //     boxesRef.current.splice(tgBoxIdx.current, 1)
+    //     tgBoxIdx.current = -1
+    //   }
+    //   refresh()
+    // }
   }, []);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {

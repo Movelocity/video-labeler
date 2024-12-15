@@ -61,7 +61,7 @@ const transformLabels = (data: LabelDataV1): LabelDataV2 => {
   };
 };
 
-/**读取标签数据，遇到旧版标签文件则自动迁移数据格式*/
+/**读取标签数据，遇到旧版标签文件则自动迁移数据格式。如果没有对应文件则返回默认的 LabelDataV2 数据*/
 const readAndMigrateLabelData = (filePath: string): LabelDataV2 => {
   if (fs.existsSync(filePath)) {
     const fileContent = fs.readFileSync(filePath, 'utf-8');
@@ -85,16 +85,17 @@ const readAndMigrateLabelData = (filePath: string): LabelDataV2 => {
   };
 };
 
-/**获取标签文件路径的辅助函数*/
+/**获取标签文件路径的辅助函数，
+ * 如果未指定labelFile，则在 videoPath 同路径的 .cache/{videoName}.json */
 const getLabelFilePath = (videoPath: string, labelFile: string | null): string => {
   const { VIDEO_ROOT, LABELS_ROOT } = getConfig();
   
   if (labelFile) {
     return path.join(LABELS_ROOT, labelFile);
+  } else {
+    const cacheDirectory = path.join(VIDEO_ROOT, path.dirname(videoPath), ".cache");
+    return path.join(cacheDirectory, `${path.basename(videoPath)}.json`);
   }
-  
-  const cacheDirectory = path.join(VIDEO_ROOT, path.dirname(videoPath), ".cache");
-  return path.join(cacheDirectory, `${path.basename(videoPath)}.json`);
 };
 
 /**确保缓存目录存在的辅助函数*/
@@ -116,7 +117,7 @@ async function handleV2(req: NextRequest) {
     case "write":
       return handleWriteV2(req, searchParams);
     case "delete":
-      return handleDeleteV2(req, searchParams);
+      return handleDeleteV2(searchParams);
     default:
       return NextResponse.json(
         { msg: "Only support actions: 'read', 'write', 'delete'" }, 
@@ -153,7 +154,7 @@ async function handleWriteV2(req: NextRequest, searchParams: URLSearchParams) {
     
     // 更新或添加对象
     object_updates.forEach((update: LabelObject) => {
-      const existingIndex = data.objects.findIndex(obj => obj.label === update.label);
+      const existingIndex = data.objects.findIndex(obj => obj.id === update.id);
       if (existingIndex !== -1) {
         // 合并时间线数据
         data.objects[existingIndex].timeline = {
@@ -179,7 +180,7 @@ async function handleWriteV2(req: NextRequest, searchParams: URLSearchParams) {
 }
 
 /**删除标签数据*/
-async function handleDeleteV2(req: NextRequest, searchParams: URLSearchParams) {
+async function handleDeleteV2(searchParams: URLSearchParams) {
   const video_path = searchParams.get('video_path') ?? "";
   const obj_id = searchParams.get('obj_id') ?? "";
   const timePoint = searchParams.get('time') ?? "";
