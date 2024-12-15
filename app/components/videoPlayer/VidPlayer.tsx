@@ -27,11 +27,12 @@ export interface VidPlayerHandle {
 export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_path, label_path}, ref) => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const videoPlayer = useVideoPlayer(videoService.getVideoUrl(video_path, label_path));
-  const { setVideoProgress, setLabelPath } = useLabeling()
+  const { setVideoProgress, setLabelPath, setVideoPath } = useLabeling()
 
   useEffect(()=>{
+    setVideoPath(video_path)
     setLabelPath(label_path)
-  }, [label_path])
+  }, [video_path, label_path])
 
   // 计算视频组件的尺寸
   const calculateVideoSize = useCallback(() => {

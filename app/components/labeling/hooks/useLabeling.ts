@@ -96,14 +96,6 @@ export const useLabeling = () => {
     await store.removeKeyFrame(objId, time);
   };
 
-  const setLabelPath = (path: string) => {
-    if(!path) {
-      console.log("skip")
-      return
-    }
-    store.setLabelPath(path);
-  }
-
   return {
     // Data
     labelData: store.labelData,
@@ -127,6 +119,19 @@ export const useLabeling = () => {
     deleteKeyFrame,
 
     label_path: store.label_path,
-    setLabelPath
+    setLabelPath: (path: string) => {
+      if(!path) {
+        console.log("skip")
+        return
+      }
+      store.setLabelPath(path);
+    },
+    setVideoPath: (path: string) => {
+      if(!path) {
+        console.log("skip")
+        return
+      }
+      store.setVideoPath(path);
+    },
   };
 };

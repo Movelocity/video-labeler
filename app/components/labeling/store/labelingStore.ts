@@ -74,7 +74,7 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
   },
 
   saveObject: async (obj: LabelObject) => {
-    const { labelData, video_path } = get();
+    const { labelData, video_path, label_path } = get();
     if (!labelData) return;
 
     const newLabelData = {
@@ -85,7 +85,7 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
     set({ labelData: newLabelData });
 
     try {
-      await labelingService.saveLabelingV2(video_path, [obj]);
+      await labelingService.saveLabelingV2(video_path, [obj], label_path);
     } catch (error) {
       console.error('Error saving object:', error);
       set({ labelData });
@@ -93,7 +93,7 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
   },
 
   removeObject: async (objId: string) => {
-    const { labelData, video_path } = get();
+    const { labelData, video_path, label_path } = get();
     if (!labelData) return;
 
     const objectToDelete = labelData.objects.find(obj => obj.id === objId);
@@ -109,7 +109,7 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
     try {
       const timePoints = Object.keys(objectToDelete.timeline).map(t => parseFloat(t));
       for (const time of timePoints) {
-        await labelingService.deleteLabelingV2(video_path, objId, time);
+        await labelingService.deleteLabelingV2(video_path, objId, time, label_path);
       }
     } catch (error) {
       console.error('Error deleting object:', error);
@@ -118,7 +118,7 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
   },
 
   saveKeyFrame: async (objId: string, time: number, box: AnchorBox) => {
-    const { labelData, video_path } = get();
+    const { labelData, video_path, label_path } = get();
     if (!labelData) return;
 
     const objectToUpdate = labelData.objects.find(obj => obj.id === objId);
@@ -140,7 +140,7 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
     set({ labelData: newLabelData });
 
     try {
-      await labelingService.saveLabelingV2(video_path, [updatedObject]);
+      await labelingService.saveLabelingV2(video_path, [updatedObject], label_path);
     } catch (error) {
       console.error('Error saving keyframe:', error);
       set({ labelData });
@@ -148,7 +148,7 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
   },
 
   removeKeyFrame: async (objId: string, time: number) => {
-    const { labelData, video_path } = get();
+    const { labelData, video_path, label_path } = get();
     if (!labelData) return;
 
     const objectToUpdate = labelData.objects.find(obj => obj.id === objId);
@@ -168,7 +168,7 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
     set({ labelData: newLabelData });
 
     try {
-      await labelingService.deleteLabelingV2(video_path, objId, time);
+      await labelingService.deleteLabelingV2(video_path, objId, time, label_path);
     } catch (error) {
       console.error('Error deleting keyframe:', error);
       set({ labelData });
