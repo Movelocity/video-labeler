@@ -7,6 +7,7 @@ import { useKeyboardShortcuts } from '@/components/videoPlayer/hooks/useKeyboard
 import { VideoControls } from '@/components/videoPlayer/_partial/VideoControls';
 import { videoService } from '@/service/video';
 import { useLabelingStore } from '@/components/labeling/store/labelingStore';
+import { useLabeling } from '@/components/labeling/hooks/useLabeling';
 import VideoProgress from '@/components/videoPlayer/_partial/VideoProgress';
 import { CanvasLayer } from '@/components/BoxesLayer/CanvasLayer';
 
@@ -26,7 +27,11 @@ export interface VidPlayerHandle {
 export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_path, label_path}, ref) => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const videoPlayer = useVideoPlayer(videoService.getVideoUrl(video_path, label_path));
-  const { setVideoProgress } = useLabelingStore()
+  const { setVideoProgress, setLabelPath } = useLabeling()
+
+  useEffect(()=>{
+    setLabelPath(label_path)
+  }, [label_path])
 
   // 计算视频组件的尺寸
   const calculateVideoSize = useCallback(() => {

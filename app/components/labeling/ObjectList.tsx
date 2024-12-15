@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { randomColor } from '@/lib/utils';
-import { useLabelingStore } from '@/components/labeling/store/labelingStore';
+import { useLabeling } from '@/components/labeling/hooks/useLabeling';
 import { KeyFrameViewer } from '@/components/labeling/KeyFrameViewer';
 import cn from 'classnames';
 
@@ -57,11 +57,13 @@ interface ObjectListProps {
 }
 
 export const ObjectList = ({ to_progress }: ObjectListProps) => {
-  const labelData = useLabelingStore(state => state.labelData);
-  const selectedIds = useLabelingStore(state => state.selectedIds);
-  const activeObjId = useLabelingStore(state => state.activeObjId);
-  const toggleObjectSelection = useLabelingStore(state => state.toggleObjectSelection);
-  const setactiveObjId = useLabelingStore(state => state.setactiveObjId);
+  const { 
+    labelData,
+    selectedIds,
+    activeObjId,
+    toggleObjectSelection,
+    setActiveObjId
+  } = useLabeling();
   
   const objectsWithColors = useMemo(() => {
     return labelData?.objects.map(obj => ({
@@ -79,18 +81,17 @@ export const ObjectList = ({ to_progress }: ObjectListProps) => {
     );
   }
 
-
   return (
     <div className="flex flex-col gap-4 w-[30%] ml-4">
       <ul className="space-y-2 max-h-[400px] overflow-y-scroll p-2">
         {objectsWithColors?.map((obj, idx) => (
           <ObjectItem
-            key={idx}  // object.label is not unique, so we use index as key
+            key={idx}
             object={obj}
             isSelected={selectedIds.includes(obj.id)}
             isActive={activeObjId === obj.id}
             onSelect={()=>toggleObjectSelection(obj.id)}
-            onActivate={()=>setactiveObjId(obj.id)}
+            onActivate={()=>setActiveObjId(obj.id)}
           />
         ))}
       </ul>

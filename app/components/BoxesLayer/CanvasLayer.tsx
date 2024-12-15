@@ -3,7 +3,8 @@ import { AnchorBox, Point } from '@/lib/types'
 import { pointCollidesBox, pointCollidesBoxCorner } from './utils'
 import { draw } from './draw'
 
-import { useLabelingStore } from '@/components/labeling/store/labelingStore';
+// import { useLabelingStore } from '@/components/labeling/store/labelingStore';
+import { useLabeling } from '@/components/labeling/hooks/useLabeling';
 
 export type CanvasLayerProps = {
   width: number;
@@ -35,8 +36,8 @@ export const CanvasLayer = ({
   const isResizing = useRef(false)  // 是否正在通过鼠标调整框大小
   const boxStartRef = useRef<Point>({x: 0, y: 0})  // 框开始点
 
-  const { getCurrentBoxes } = useLabelingStore()
-  const videoProgress = useLabelingStore(state => state.videoProgress)
+  const { getCurrentBoxes, videoProgress } = useLabeling()
+  // const videoProgress = useLabelingStore(state => state.videoProgress)
 
   useEffect(()=> {
     const boxes = getCurrentBoxes()

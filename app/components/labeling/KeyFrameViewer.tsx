@@ -2,6 +2,7 @@ import { TimelineEntry } from '@/lib/types';
 import { useLabelingStore } from './store/labelingStore';
 import cn from 'classnames';
 import { randomColor } from '@/lib/utils';
+import { useLabeling } from './hooks/useLabeling';
 
 interface KeyFrameViewerProps {
   className?: string;
@@ -9,9 +10,10 @@ interface KeyFrameViewerProps {
 }
 
 export const KeyFrameViewer = ({ className, jump_to_frame }: KeyFrameViewerProps) => {
-  const activeObjIdData = useLabelingStore(state => state.getactiveObjData());
-
-  if (!activeObjIdData) {
+  // const activeObjIdData = useLabelingStore(state => state.getactiveObjData());
+  const { getActiveObjectData } = useLabeling()
+  const activeObjData = getActiveObjectData()
+  if (!activeObjData) {
     return (
       <div className={cn("bg-slate-800/50 p-4 rounded-lg", className)}>
         <div className="text-slate-400 text-center">
@@ -33,16 +35,16 @@ export const KeyFrameViewer = ({ className, jump_to_frame }: KeyFrameViewerProps
           关键帧列表
         </span>
         <span className="text-slate-200 text-sm">
-          {activeObjIdData.label}
+          {activeObjData.label}
         </span>
       </span>
       <div className="flex flex-wrap gap-2 max-h-[300px] overflow-y-scroll pt-2">
-        {Object.entries(activeObjIdData.timeline).map(([frame, data]) => (
+        {Object.entries(activeObjData.timeline).map(([frame, data]) => (
           <button
             key={frame}
             onClick={() => handleKeyFrameClick(frame)}
             className="px-3 py-1.5 rounded text-sm hover:bg-slate-700 transition-colors"
-            style={{ backgroundColor: `${activeObjIdData.color || randomColor()}20`, color: activeObjIdData.color || randomColor() }}
+            style={{ backgroundColor: `${activeObjData.color || randomColor()}20`, color: activeObjData.color || randomColor() }}
           >
             帧 {frame}
           </button>
