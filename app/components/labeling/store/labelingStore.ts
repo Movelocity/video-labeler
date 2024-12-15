@@ -11,12 +11,14 @@ interface LabelingState {
   selectedIds: string[];
   activeObjId: string | null;
   videoProgress: number;
+  renderedBoxes: AnchorBox[];
   
   // Basic setters
   setLabelPath: (path: string) => void;
   setVideoPath: (path: string) => void;
   setLabelData: (data: LabelDataV2) => void;
   setVideoProgress: (progress: number) => void;
+  setRenderedBoxes: (boxes: AnchorBox[]) => void,
   
   // Selection operations
   toggleObjectSelection: (objId: string) => void;
@@ -37,6 +39,7 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
   label_path: '',
   selectedIds: [],
   activeObjId: null,
+  renderedBoxes: [],
   videoProgress: 0,
 
   // Basic setters
@@ -44,6 +47,7 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
   setLabelPath: (path) => set({ label_path: path }),
   setLabelData: (data) => set({ labelData: data }),
   setVideoProgress: (progress) => set({ videoProgress: progress }),
+  setRenderedBoxes: (boxes) => set({ renderedBoxes: boxes }),
   
   // Selection operations
   toggleObjectSelection: (objId) => {

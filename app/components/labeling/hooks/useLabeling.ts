@@ -133,5 +133,7 @@ export const useLabeling = () => {
       }
       store.setVideoPath(path);
     },
+    renderedBoxes: store.renderedBoxes,
+    setRenderedBoxes: store.setRenderedBoxes
   };
 };

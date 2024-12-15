@@ -36,7 +36,7 @@ export const CanvasLayer = ({
   const isResizing = useRef(false)  // 是否正在通过鼠标调整框大小
   const boxStartRef = useRef<Point>({x: 0, y: 0})  // 框开始点
 
-  const { getCurrentBoxes, videoProgress } = useLabeling()
+  const { getCurrentBoxes, videoProgress, setRenderedBoxes } = useLabeling()
   // const videoProgress = useLabelingStore(state => state.videoProgress)
 
   useEffect(()=> {
@@ -50,6 +50,7 @@ export const CanvasLayer = ({
   const refresh = () => {
     if(!canvasRef.current) return;
     // console.log("canvas size in refresh:", canvasRef.current.width, canvasRef.current.height)
+    setRenderedBoxes(boxesRef.current);
     draw(canvasRef.current, boxesRef.current, tgBoxIdx.current)
   }
 

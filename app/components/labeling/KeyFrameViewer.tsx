@@ -11,7 +11,7 @@ interface KeyFrameViewerProps {
 
 export const KeyFrameViewer = ({ className, jump_to_frame }: KeyFrameViewerProps) => {
   // const activeObjIdData = useLabelingStore(state => state.getactiveObjData());
-  const { getActiveObjectData } = useLabeling()
+  const { getActiveObjectData, renderedBoxes } = useLabeling()
   const activeObjData = getActiveObjectData()
   if (!activeObjData) {
     return (
@@ -50,6 +50,13 @@ export const KeyFrameViewer = ({ className, jump_to_frame }: KeyFrameViewerProps
           </button>
         ))}
       </div>
+      <button
+        onClick={()=> {
+          console.log(renderedBoxes)
+        }}
+      >
+        inspect boxes {renderedBoxes.length}
+      </button>
     </div>
   );
 };
