@@ -13,8 +13,8 @@ import { CanvasLayer } from '@/components/BoxesLayer/CanvasLayer';
 const px = (n: number) => `${n}px`
 
 interface PlayerProps {
-  video_file: string;
-  label_file: string;
+  video_path: string;
+  label_path: string;
 }
 
 export interface VidPlayerHandle {
@@ -23,9 +23,9 @@ export interface VidPlayerHandle {
   getDuration: () => number;
 }
 
-export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_file, label_file}, ref) => {
+export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_path, label_path}, ref) => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const videoPlayer = useVideoPlayer(videoService.getVideoUrl(video_file, label_file));
+  const videoPlayer = useVideoPlayer(videoService.getVideoUrl(video_path, label_path));
   const { setVideoProgress } = useLabelingStore()
 
   // 计算视频组件的尺寸
@@ -74,7 +74,7 @@ export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_file, 
       setHasWindow(true);
       hasInit.current = true;
     }
-  }, [video_file]);
+  }, [video_path]);
 
   // Add keyboard shortcuts
   useKeyboardShortcuts({

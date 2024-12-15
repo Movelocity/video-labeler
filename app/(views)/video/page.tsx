@@ -7,21 +7,21 @@ import { useLabelingStore } from '@/components/labeling/store/labelingStore';
 
 function Video() {
   const searchParams = useSearchParams()
-  const video_file:string = searchParams.get('video_file') as string
-  const label_file:string = searchParams.get('label_file') as string
+  const video_path:string = searchParams.get('video_path') as string
+  const label_path:string = searchParams.get('label_path') as string
 
   const videoRef = useRef<VidPlayerHandle>(null);
   const loadLabelData = useLabelingStore(state => state.loadLabelData);
 
   useEffect(() => {
-    loadLabelData(label_file);
-  }, [label_file, loadLabelData]);
+    loadLabelData(label_path);
+  }, [label_path, loadLabelData]);
 
   return (
     <div className="w-full h-full flex flex-row px-8 pt-16">
       <VidPlayer
-        video_file={video_file}
-        label_file={label_file}
+        video_path={video_path}
+        label_path={label_path}
         ref={videoRef}
       />
       <ObjectList

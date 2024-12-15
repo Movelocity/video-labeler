@@ -106,7 +106,7 @@ export async function GET(req: NextRequest) {
 
     return {
       name: item,
-      label_file: labelFileRelativePath,
+      label_path: labelFileRelativePath,
       labels,
       size: isFile ? fs.statSync(itemFullPath).size : undefined,
       modified_time: isFile ? fs.statSync(itemFullPath).mtime.toISOString() : undefined,

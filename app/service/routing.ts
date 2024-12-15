@@ -20,7 +20,7 @@ export const getFileTarget = (file: FileInfo, directory: string): string => {
   } 
   
   if (isVideoFile(file.name.toLowerCase())) {
-    return "/video?video_file=" + [directory, file.name].join("/") + "&label_file=" + file.label_file
+    return "/video?video_path=" + [directory, file.name].join("/") + "&label_path=" + file.label_path
   }
   
   return "#!"

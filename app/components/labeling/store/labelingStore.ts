@@ -17,7 +17,7 @@ interface LabelingState {
   toggleObjectSelection: (objId: string) => void;
   setactiveObjId: (objId: string | null) => void;
   setVideoProgress: (time: number) => void;
-  loadLabelData: (label_file: string) => Promise<void>;
+  loadLabelData: (label_path: string) => Promise<void>;
   
   // Computed
   getCurrentBoxes: () => AnchorBox[];
@@ -60,9 +60,9 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
   setVideoProgress: (time) => set({ videoProgress: time }),
   
   /** 加载标签数据 */
-  loadLabelData: async (label_file) => {
+  loadLabelData: async (label_path) => {
     try {
-      const data = await labelingService.readLabelsV2('', label_file);
+      const data = await labelingService.readLabelsV2('', label_path);
       if (data) set({ labelData: data });
     } catch (error) {
       console.error('Error reading labels:', error);

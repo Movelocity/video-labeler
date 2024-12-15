@@ -10,7 +10,7 @@ export interface AnchorBox {
 
 export type FileInfo = {
   name: string            // 文件名
-  label_file: string      // 标注文件路径
+  label_path: string      // 标注文件路径
   labels: string[]        // 标签集合
   size?: number           // 文件大小
   modified_time?: string  // 文件修改时间

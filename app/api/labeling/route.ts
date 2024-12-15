@@ -127,8 +127,8 @@ async function handleV2(req: NextRequest) {
 
 /**读取标签数据*/
 function handleReadV2(searchParams: URLSearchParams) {
-  const videopath = searchParams.get('videopath') ?? "";
-  const filePath = getLabelFilePath(videopath, searchParams.get('label_file'));
+  const video_path = searchParams.get('video_path') ?? "";
+  const filePath = getLabelFilePath(video_path, searchParams.get('label_path'));
 
   try {
     const data = readAndMigrateLabelData(filePath);
@@ -144,7 +144,7 @@ function handleReadV2(searchParams: URLSearchParams) {
 /**写入标签数据*/
 async function handleWriteV2(req: NextRequest, searchParams: URLSearchParams) {
   const { video_name, object_updates } = await req.json();
-  const filePath = getLabelFilePath(video_name, searchParams.get('label_file'));
+  const filePath = getLabelFilePath(video_name, searchParams.get('label_path'));
 
   try {
     ensureCacheDirectory(video_name);
@@ -180,7 +180,7 @@ async function handleWriteV2(req: NextRequest, searchParams: URLSearchParams) {
 /**删除标签数据*/
 async function handleDeleteV2(req: NextRequest, searchParams: URLSearchParams) {
   const { video_name, label, time } = await req.json();
-  const filePath = getLabelFilePath(video_name, searchParams.get('label_file'));
+  const filePath = getLabelFilePath(video_name, searchParams.get('label_path'));
 
   try {
     const data = readAndMigrateLabelData(filePath);
