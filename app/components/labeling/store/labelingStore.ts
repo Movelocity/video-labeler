@@ -32,6 +32,7 @@ interface LabelingState {
   saveKeyFrame: (objId: string, time: number, box: AnchorBox) => Promise<void>;
   /** 删除物体id在关键帧time的标注框 */
   removeKeyFrame: (objId: string, time: number) => Promise<void>;
+  moveKeyFrame: (objId: string, fromTime: number, toTime: number) => Promise<void>;
 }
 
 export const useLabelingStore = create<LabelingState>((set, get) => ({
@@ -177,6 +178,25 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
       await labelingService.deleteLabelingV2(video_path, objId, time, label_path);
     } catch (error) {
       console.error('Error deleting keyframe:', error);
+      set({ labelData });
+    }
+  },
+
+  moveKeyFrame: async (objId: string, fromTime: number, toTime: number) => {
+    const { labelData, label_path } = get();
+    if (!labelData) return;
+    const objectToUpdate = labelData.objects.find(obj => obj.id === objId);
+    if (!objectToUpdate) return;
+    const box = objectToUpdate.timeline[safeTimeKey(fromTime)];
+    if (!box) return;
+    delete objectToUpdate.timeline[safeTimeKey(fromTime)];
+    objectToUpdate.timeline[safeTimeKey(toTime)] = box;
+
+    set({ labelData: { ...labelData, objects: [...labelData.objects] } });
+    try{
+      await labelingService.saveLabelingV2(objectToUpdate.id, [objectToUpdate], label_path);
+    } catch (error) {
+      console.error('Error moving keyframe:', error);
       set({ labelData });
     }
   },

@@ -100,6 +100,11 @@ export const useLabeling = () => {
     await store.removeKeyFrame(objId, time);
   };
 
+  /** 移动关键帧 */
+  const moveKeyFrame = async (objId: string, time: number, newTime: number) => {
+    await store.moveKeyFrame(objId, time, newTime);
+  };
+
   return {
     // Data
     labelData: store.labelData,
@@ -121,6 +126,7 @@ export const useLabeling = () => {
     deleteObject,
     addKeyFrame,
     deleteKeyFrame,
+    moveKeyFrame,
 
     label_path: store.label_path,
     setLabelPath: (path: string) => {
