@@ -1,15 +1,21 @@
 import { LabelDataV2, AnchorBox, LabelObject } from '@/lib/types';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLabelingStore } from '../store/labelingStore';
 import { TIME_DIFF_THRESHOLD } from '@/lib/constants';
 import { safeTimeKey } from '@/lib/utils';
 
 export const useLabeling = () => {
   const store = useLabelingStore();
+  const prevPathRef = useRef<string | null>(null);
 
   // Load label data when path changes
   useEffect(() => {
-    console.log("Label path changed:", store.label_path)
+    if (!store.label_path || store.label_path === prevPathRef.current) {
+      return;
+    }
+    
+    console.log("Label path changed:", store.label_path);
+    prevPathRef.current = store.label_path;
     store.loadLabelData(store.label_path);
   }, [store.label_path]);
 
@@ -18,7 +24,6 @@ export const useLabeling = () => {
     if (!store.labelData || !store.activeObjId) return undefined;
     return store.labelData.objects.find(obj => obj.id === store.activeObjId);
   };
-
 
   // Get current boxes with interpolation
   const getCurrentBoxes = (): AnchorBox[] => {

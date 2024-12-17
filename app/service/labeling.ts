@@ -53,6 +53,7 @@ export const labelingService = {
 
   // V2 API 新接口
   async readLabelsV2(video_path: string, label_path?: string): Promise<LabelDataV2> {
+    
     const response = await fetch(`/api/labeling?action=read&video_path=${video_path}&label_path=${label_path || ''}`, {
       method: 'GET'
     });

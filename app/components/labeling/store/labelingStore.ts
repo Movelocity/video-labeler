@@ -7,6 +7,7 @@ interface LabelingState {
   // Core states
   video_path: string;
   label_path: string;
+  /** 一个视频对应的标注数据，包括多个物体 */
   labelData: LabelDataV2 | undefined;
   selectedIds: string[];
   activeObjId: string | null;
@@ -73,6 +74,7 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
   loadLabelData: async (label_path) => {
     const { video_path } = get();
     try {
+      console.log('Reading labels from:', label_path);
       const data = await labelingService.readLabelsV2(video_path, label_path);
       if (data) set({ labelData: data });
     } catch (error) {

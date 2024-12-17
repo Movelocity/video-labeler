@@ -28,7 +28,7 @@ const KeyFrameList = ({ timeline, color, onKeyFrameClick }: KeyFrameListProps) =
             }}
             aria-label={`关键帧 ${frame}`}
           >
-            <TbKeyframeFilled className="text-xl" />
+            <TbKeyframeFilled className="text-xl brightness-50 hover:filter-none" />
           </span>
         );
       })}
