@@ -53,7 +53,7 @@ export const labelingService = {
 
   // V2 API 新接口
   async readLabelsV2(video_path: string, label_path?: string): Promise<LabelDataV2> {
-    
+
     const response = await fetch(`/api/labeling?action=read&video_path=${video_path}&label_path=${label_path || ''}`, {
       method: 'GET'
     });
@@ -66,7 +66,7 @@ export const labelingService = {
     return data;
   },
 
-  /** 保存标注框信息 */
+  /** 保存标注框信息，如果和已有 object id 重合，则会与已有合并，否则新增 object */
   async saveLabelingV2(video_path: string, object_updates: LabelObject[], label_path?: string): Promise<void> {
     await fetch(`/api/labeling?action=write&video_path=${video_path}&label_path=${label_path || ''}`, {
       method: 'POST',

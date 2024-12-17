@@ -84,7 +84,7 @@ export const useLabeling = () => {
 
   // Object operations
   const addObject = async (obj: LabelObject) => {
-    await store.saveObject(obj);
+    await store.addObject(obj);
     store.toggleObjectSelection(obj.id);
   };
 

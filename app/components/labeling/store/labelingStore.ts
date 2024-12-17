@@ -27,7 +27,8 @@ interface LabelingState {
   
   // Core data operations
   loadLabelData: (label_path: string) => Promise<void>;
-  saveObject: (obj: LabelObject) => Promise<void>;
+  addObject: (obj: LabelObject) => Promise<void>;
+  updateObject: (obj: LabelObject) => Promise<void>;
   removeObject: (objId: string) => Promise<void>;
   /** 保存物体id在关键帧time的标注框 */
   saveKeyFrame: (objId: string, time: number, box: AnchorBox) => Promise<void>;
@@ -82,7 +83,7 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
     }
   },
 
-  saveObject: async (obj: LabelObject) => {
+  addObject: async (obj: LabelObject) => {
     const { labelData, video_path, label_path } = get();
     if (!labelData) return;
 
@@ -97,6 +98,25 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
       await labelingService.saveLabelingV2(video_path, [obj], label_path);
     } catch (error) {
       console.error('Error saving object:', error);
+      set({ labelData });
+    }
+  },
+
+  updateObject: async (tgObj: LabelObject) => {
+    const { labelData, video_path, label_path } = get();
+    if (!labelData) return;
+
+    const objectToUpdate = labelData.objects.find(obj => obj.id === tgObj.id);
+    if (!objectToUpdate) return;  // 原本没有这个物体，则不用更新
+
+    const updatedObject = {
+      ...objectToUpdate,
+      ...tgObj
+    };
+    try{
+      await labelingService.saveLabelingV2(video_path, [updatedObject], label_path);
+    } catch (error) {
+      console.error('Error updating object:', error);
       set({ labelData });
     }
   },

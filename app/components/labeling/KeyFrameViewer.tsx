@@ -1,5 +1,3 @@
-// import { TimelineEntry } from '@/lib/types';
-// import { useLabelingStore } from './store/labelingStore';
 import cn from 'classnames';
 import { randomColor } from '@/lib/utils';
 import { useLabeling } from './hooks/useLabeling';
@@ -80,11 +78,12 @@ export const KeyFrameViewer = ({ className, jump_to_frame }: KeyFrameViewerProps
     <div className={cn("bg-slate-800/50 p-4 rounded-lg", className)}>
       <span className="flex flex-row items-center gap-2 shadow-md pb-2">
         <span className="text-slate-400 text-sm">
-          关键帧列表
+          关键帧编辑
         </span>
         <span className="text-slate-200 text-sm">
-          {activeObjData.label}
+          {activeObjData.label} id: {activeObjId}
         </span>
+        
       </span>
       {/* <div className="h-8 bg-slate-900 relative">
         {Object.entries(activeObjData.timeline).sort().map(([frame, data]) => {
