@@ -28,7 +28,9 @@ interface LabelingState {
   loadLabelData: (label_path: string) => Promise<void>;
   saveObject: (obj: LabelObject) => Promise<void>;
   removeObject: (objId: string) => Promise<void>;
+  /** 保存物体id在关键帧time的标注框 */
   saveKeyFrame: (objId: string, time: number, box: AnchorBox) => Promise<void>;
+  /** 删除物体id在关键帧time的标注框 */
   removeKeyFrame: (objId: string, time: number) => Promise<void>;
 }
 

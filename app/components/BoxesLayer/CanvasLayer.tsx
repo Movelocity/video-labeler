@@ -58,7 +58,7 @@ export const CanvasLayer = ({
   useEffect(() => {
     setTimeout(()=> {
       if(canvasRef.current) {
-        console.log("setting canvas size:", width, height)
+        // console.log("setting canvas size:", width, height)
         canvasRef.current.width = width
         canvasRef.current.height = height
         refresh()

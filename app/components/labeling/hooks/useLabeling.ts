@@ -19,6 +19,7 @@ export const useLabeling = () => {
     return store.labelData.objects.find(obj => obj.id === store.activeObjId);
   };
 
+
   // Get current boxes with interpolation
   const getCurrentBoxes = (): AnchorBox[] => {
     if (!store.labelData || store.selectedIds.length === 0) return [];
@@ -56,7 +57,8 @@ export const useLabeling = () => {
           w: box1.w + (box2.w - box1.w) * ratio,
           h: box1.h + (box2.h - box1.h) * ratio,
           label: box1.label,
-          color: object.color
+          color: object.color,
+          objId: object.id
         };
 
         boxes.push(interpolatedBox);
@@ -67,7 +69,7 @@ export const useLabeling = () => {
         );
         if (exactTimePoint !== undefined) {
           const box = object.timeline[safeTimeKey(exactTimePoint)];
-          boxes.push({ ...box, color: object.color });
+          boxes.push({ ...box, color: object.color, objId: object.id });
         }
       }
     });
@@ -88,10 +90,12 @@ export const useLabeling = () => {
     }
   };
 
+  /** 增加关键帧 */
   const addKeyFrame = async (objId: string, time: number, box: AnchorBox) => {
     await store.saveKeyFrame(objId, time, box);
   };
 
+  /** 删除关键帧 */
   const deleteKeyFrame = async (objId: string, time: number) => {
     await store.removeKeyFrame(objId, time);
   };
