@@ -88,6 +88,10 @@ export const useLabeling = () => {
     store.toggleObjectSelection(obj.id);
   };
 
+  const updateObject = async (obj: LabelObject) => {
+    await store.updateObject(obj);
+  };
+
   const deleteObject = async (objId: string) => {
     await store.removeObject(objId);
     if (store.activeObjId === objId) {
@@ -129,6 +133,7 @@ export const useLabeling = () => {
     // Operations
     addObject,
     deleteObject,
+    updateObject,
     addKeyFrame,
     deleteKeyFrame,
     moveKeyFrame,

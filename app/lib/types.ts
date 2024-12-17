@@ -45,6 +45,11 @@ export interface LabelObject {
   timeline: TimelineEntry;
 }
 
+export interface LabelDataV1 {
+  metadata: Record<string, any>;
+  labels: Record<string, AnchorBox[]>;
+}
+
 export interface LabelDataV2 {
   metadata: Record<string, any>;
   labels?: Record<string, AnchorBox[]>;

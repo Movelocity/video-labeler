@@ -62,7 +62,7 @@ export const KeyFrameViewer = ({ className, jump_to_frame }: KeyFrameViewerProps
     if(!activeObjId) return
     const targetBox = renderedBoxes.find(box => box.objId === activeObjId)
     if(!targetBox) {
-      addKeyFrame(activeObjId, videoProgress, {sx: 0.4, sy: 0.4, w:0.2, h:0.14, label:""})
+      addKeyFrame(activeObjId, videoProgress, {sx: 0.4, sy: 0.4, w:0.2, h:0.14, label:activeObjData.label})
       handleKeyFrameClick(videoProgress.toString());
     } else{
       addKeyFrame(activeObjId, videoProgress, {...targetBox, objId: undefined, color: undefined})
@@ -83,28 +83,7 @@ export const KeyFrameViewer = ({ className, jump_to_frame }: KeyFrameViewerProps
         <span className="text-slate-200 text-sm">
           {activeObjData.label} id: {activeObjId}
         </span>
-        
       </span>
-      {/* <div className="h-8 bg-slate-900 relative">
-        {Object.entries(activeObjData.timeline).sort().map(([frame, data]) => {
-          const position = parseFloat(frame) * 100;
-          return (
-            <span
-              key={frame}
-              onClick={() => handleKeyFrameClick(frame)}
-              className="absolute flex items-center justify-center w-8 h-8 -ml-4 cursor-pointer"
-              style={{ 
-                left: `${position}%`,
-                backgroundColor: `${activeObjData.color}20`, 
-                color: activeObjData.color || randomColor() 
-              }}
-              aria-label={`关键帧 ${frame}`}
-            >
-              <TbKeyframeFilled className="text-xl hover:shadow-md shadow-white" />
-            </span>
-          );
-        })}
-      </div> */}
       <KeyFrameList // 使用新组件
         timeline={activeObjData.timeline}
         color={activeObjData.color}
@@ -113,16 +92,16 @@ export const KeyFrameViewer = ({ className, jump_to_frame }: KeyFrameViewerProps
       <div className="flex flex-row justify-end py-1 mt-2">
         <button
           title="在当前播放进度添加|更新关键帧"
-          className="mx-2 px-1 rounded-md bg-green-700"
+          className="mx-2 px-1 rounded-md bg-green-700 hover:bg-green-800"
           onClick={()=> {
             handleAddKeyFrame()
           }}
         >
-          Add
+          Add&Save
         </button>
         <button
           title="删除当前对应的关键帧"
-          className="mx-2 px-1 rounded-md bg-rose-700 flex flex-row"
+          className="mx-2 px-1 rounded-md bg-rose-700 hover:bg-rose-800"
           onClick={()=> {
             handleDeleteKeyFrame()
           }}

@@ -1,3 +1,5 @@
+import { LabelDataV1, LabelDataV2 } from "./types";
+
 /** 将秒数转换为时间格式*/
 export const second2time = (seconds: number) => {
   const minutes = Math.floor(seconds / 60);
@@ -23,3 +25,7 @@ export const safeTimeKey = (time: number | string): string => {
   }
 }
 
+/**自动生成id*/
+export const autoIncrementId = (data: LabelDataV2|LabelDataV1) => {
+  return (data.metadata.nextId = (data.metadata.nextId || 0) + 1).toString();
+}

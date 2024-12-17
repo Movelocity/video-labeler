@@ -2,28 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { getConfig } from '../config';
-import { LabelDataV2, LabelObject, AnchorBox } from '@/lib/types';
+import { LabelDataV2, LabelObject, LabelDataV1 } from '@/lib/types';
 import { randomColor, safeTimeKey } from '@/lib/utils';
 import { TIME_DIFF_THRESHOLD } from '@/lib/constants';
-
+import { autoIncrementId } from '@/lib/utils';
 export const runtime = "nodejs";
-
-interface LabelDataV1 {
-  metadata: Record<string, any>;
-  labels: Record<string, AnchorBox[]>;
-}
-
-type LabelData = LabelDataV1 | LabelDataV2;
 
 /**检测是否为旧版标签文件*/
 const isLegacyFormat = (data: any): data is LabelDataV1 => {
   return !('version' in data) || !('objects' in data);
 };
-
-/**自动生成id*/
-const autoIncrementId = (data: LabelData) => {
-  return (data.metadata.nextId = (data.metadata.nextId || 0) + 1).toString();
-}
   
 /** 转换标签数据, 输入旧数据结构，返回新版本数据结构，新版兼容旧版 */
 const transformLabels = (data: LabelDataV1): LabelDataV2 => {
