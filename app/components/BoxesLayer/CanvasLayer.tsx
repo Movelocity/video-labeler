@@ -4,7 +4,8 @@ import { pointCollidesBox, pointCollidesBoxCorner } from './utils'
 import { draw } from './draw'
 
 // import { useLabelingStore } from '@/components/labeling/store/labelingStore';
-import { useLabeling } from '@/components/labeling/hooks/useLabeling';
+// import { useLabeling } from '@/components/labeling/hooks/useLabeling';
+import { useLabelingStore, useStore, getCurrentBoxes } from '@/components/labeling/store';
 
 export type CanvasLayerProps = {
   width: number;
@@ -36,11 +37,14 @@ export const CanvasLayer = ({
   const isResizing = useRef(false)  // 是否正在通过鼠标调整框大小
   const boxStartRef = useRef<Point>({x: 0, y: 0})  // 框开始点
 
-  const { getCurrentBoxes, videoProgress, setRenderedBoxes } = useLabeling()
+  const labelingStore = useLabelingStore();
+  const videoProgress = useStore(state => state.videoProgress);
+
+  // const { getCurrentBoxes, videoProgress, setRenderedBoxes } = useLabeling()
   // const videoProgress = useLabelingStore(state => state.videoProgress)
 
   useEffect(()=> {
-    const boxes = getCurrentBoxes()
+    const boxes = getCurrentBoxes(labelingStore.getState())
     // console.log('getCurrentBoxes:', boxes)
     boxesRef.current = boxes
     refresh()
@@ -49,6 +53,7 @@ export const CanvasLayer = ({
   /** 刷新画布 */
   const refresh = () => {
     if(!canvasRef.current) return;
+    const { setRenderedBoxes } = labelingStore.getState()
     // console.log("canvas size in refresh:", canvasRef.current.width, canvasRef.current.height)
     setRenderedBoxes(boxesRef.current);
     draw(canvasRef.current, boxesRef.current, tgBoxIdx.current)

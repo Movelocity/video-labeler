@@ -1,8 +1,9 @@
 'use client'
-import { Suspense, useRef, useEffect } from 'react';
+import { Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { VidPlayer, VidPlayerHandle } from '@/components/videoPlayer/VidPlayer';
 import { ObjectList } from '@/components/labeling/ObjectList';
+import { LabelingContextProvider } from "@/components/labeling/context";
 
 function Video() {
   const searchParams = useSearchParams()
@@ -12,18 +13,20 @@ function Video() {
   const videoRef = useRef<VidPlayerHandle>(null);
 
   return (
-    <div className="w-full h-full flex flex-row px-8 pt-16">
-      <VidPlayer
-        video_path={video_path}
-        label_path={label_path}
-        ref={videoRef}
-      />
-      <ObjectList
-        to_progress={(progress)=>{
-          videoRef.current?.seekTo(progress);
-        }} 
-      />
-    </div>
+    <LabelingContextProvider>
+      <div className="w-full h-full flex flex-row px-8 pt-16">
+        <VidPlayer
+          video_path={video_path}
+          label_path={label_path}
+          ref={videoRef}
+        />
+        <ObjectList
+          to_progress={(progress)=>{
+            videoRef.current?.seekTo(progress);
+          }} 
+        />
+      </div>
+    </LabelingContextProvider>
   );
 }
 

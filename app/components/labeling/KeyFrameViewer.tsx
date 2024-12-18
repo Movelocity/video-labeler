@@ -1,6 +1,7 @@
 import cn from 'classnames';
 import { randomColor } from '@/lib/utils';
-import { useLabeling } from './hooks/useLabeling';
+// import { useLabeling } from './hooks/useLabeling';
+import { useLabelingStore, useStore, getActiveObjectData } from '@/components/labeling/store';
 import { TbKeyframe, TbKeyframeFilled } from "react-icons/tb";
 
 interface KeyFrameListProps {
@@ -41,8 +42,15 @@ interface KeyFrameViewerProps {
 
 export const KeyFrameViewer = ({ className, jump_to_frame }: KeyFrameViewerProps) => {
   // const activeObjIdData = useLabelingStore(state => state.getactiveObjData());
-  const { getActiveObjectData, renderedBoxes, addKeyFrame, deleteKeyFrame, activeObjId, videoProgress } = useLabeling()
-  const activeObjData = getActiveObjectData()
+  const labelingStore = useLabelingStore()
+  const addKeyFrame = useStore(state => state.saveKeyFrame)
+  const deleteKeyFrame = useStore(state => state.removeKeyFrame)
+
+  const activeObjId = useStore(state => state.activeObjId)
+  const renderedBoxes = useStore(state => state.renderedBoxes)
+  // const { getActiveObjectData, renderedBoxes, addKeyFrame, deleteKeyFrame, activeObjId, videoProgress } = useLabeling()
+
+  const activeObjData = getActiveObjectData(labelingStore.getState())
   if (!activeObjData) {
     return (
       <div className={cn("bg-slate-800/50 p-4 rounded-lg", className)}>
@@ -54,11 +62,13 @@ export const KeyFrameViewer = ({ className, jump_to_frame }: KeyFrameViewerProps
   }
 
   const handleKeyFrameClick = (frame: string) => {
-    jump_to_frame && jump_to_frame(parseFloat(frame));
+    if(!jump_to_frame) return;
+    jump_to_frame(parseFloat(frame));
     // console.log('Selected frame:', frame, 'Data:', activeObjIdData.timeline[frame]);
   };
 
   const handleAddKeyFrame = () => {
+    const { activeObjId, renderedBoxes, videoProgress } = labelingStore.getState()
     if(!activeObjId) return
     const targetBox = renderedBoxes.find(box => box.objId === activeObjId)
     if(!targetBox) {
@@ -70,6 +80,7 @@ export const KeyFrameViewer = ({ className, jump_to_frame }: KeyFrameViewerProps
   }
 
   const handleDeleteKeyFrame = () => {
+    const { activeObjId, videoProgress } = labelingStore.getState()
     if(!activeObjId) return
     deleteKeyFrame(activeObjId, videoProgress)
   }

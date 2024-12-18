@@ -27,6 +27,7 @@ type StoreActions = {
   // Basic setters
   setVideoPath: (path: string) => void
   setLabelPath: (path: string) => void
+  // setPaths: (video_path: string, label_path: string) => void
   setLabelData: (data: LabelDataV2) => void
   setVideoProgress: (progress: number) => void
   setRenderedBoxes: (boxes: AnchorBox[]) => void
@@ -43,7 +44,7 @@ type StoreActions = {
   setActiveObjId: (objId: string | null) => void
 
   // Core data operations
-  loadLabelData: (label_path: string) => Promise<void>
+  loadLabelData: (video_path: string, label_path: string) => Promise<void>
   addObject: (obj: LabelObject) => Promise<void>
   updateObject: (obj: LabelObject) => Promise<void>
   removeObject: (objId: string) => Promise<void>
@@ -138,12 +139,12 @@ export const createLabelingStore = () => {
       setActiveObjId: (objId) => set({ activeObjId: objId }),
 
       // Core data operations
-      loadLabelData: async (new_label_path) => {
-        const { video_path, label_path } = get()
+      loadLabelData: async (video_path, label_path) => {
+        // const { video_path, label_path } = get()
         try {
-          console.log('Reading labels from:\n', new_label_path, "\nlabel_path:\n", label_path)
-          const data = await labelingService.readLabelsV2(video_path, new_label_path)
-          if (data) set({ labelData: data })
+          console.log("Reading labels from:", label_path)
+          const data = await labelingService.readLabelsV2(video_path, label_path)
+          if (data) set({ labelData: data, label_path, video_path })
         } catch (error) {
           console.error('Error reading labels:', error)
         }
@@ -348,7 +349,8 @@ export const getCurrentBoxes = (state: LabelingState): AnchorBox[] => {
       const t2 = timePoints[startIdx + 1]
       const box1 = object.timeline[safeTimeKey(t1)]
       const box2 = object.timeline[safeTimeKey(t2)]
-
+      console.log("t1: ", safeTimeKey(t1), "t2: ", safeTimeKey(t2))
+      console.log("box1: ", box1, "box2: ", box2)
       const ratio = (state.videoProgress - t1) / (t2 - t1)
       const interpolatedBox: AnchorBox = {
         sx: box1.sx + (box2.sx - box1.sx) * ratio,

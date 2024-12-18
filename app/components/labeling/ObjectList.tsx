@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { autoIncrementId, randomColor } from '@/lib/utils';
-import { useLabeling } from '@/components/labeling/hooks/useLabeling';
+// import { useLabeling } from '@/components/labeling/hooks/useLabeling';
+import { useLabelingStore, useStore } from '@/components/labeling/store';
+
 import { KeyFrameViewer } from '@/components/labeling/KeyFrameViewer';
 import cn from 'classnames';
 // import { PencilIcon, PlusIcon } from '@heroicons/react/24/outline';
@@ -73,21 +75,26 @@ interface ObjectListProps {
 }
 
 export const ObjectList = ({ to_progress }: ObjectListProps) => {
-  const { 
-    labelData,
-    selectedIds,
-    activeObjId,
-    toggleObjectSelection,
-    setActiveObjId,
-    addObject,
-    updateObject
-  } = useLabeling();
+  // const { 
+  //   labelData,
+  //   selectedIds,
+  //   activeObjId,
+  //   toggleObjectSelection,
+  //   setActiveObjId,
+  //   addObject,
+  //   updateObject
+  // } = useLabeling();
+  const labelingStore = useLabelingStore()
+  const labelData = useStore(state => state.labelData);
+  const selectedIds = useStore(state => state.selectedIds);
+  const activeObjId = useStore(state => state.activeObjId);
 
   const [editingObject, setEditingObject] = useState<{id: string, label: string} | null>(null);
   const [newObjectLabel, setNewObjectLabel] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   
   const objectsWithColors = useMemo(() => {
+    
     return labelData?.objects.map(obj => ({
       ...obj,
       color: obj.color || randomColor(),
@@ -96,6 +103,7 @@ export const ObjectList = ({ to_progress }: ObjectListProps) => {
   }, [labelData?.objects]);
 
   const handleObjectSelect = (objId: string) => {
+    const { toggleObjectSelection, setActiveObjId } = labelingStore.getState()
     toggleObjectSelection(objId);
     if (!selectedIds.includes(objId)) {
       setActiveObjId(objId);
@@ -114,7 +122,7 @@ export const ObjectList = ({ to_progress }: ObjectListProps) => {
       color: randomColor(),
       timeline: {}
     };
-    
+    const { addObject } = labelingStore.getState()
     await addObject(newObject);
     setNewObjectLabel('');
     setIsCreating(false);
@@ -125,7 +133,7 @@ export const ObjectList = ({ to_progress }: ObjectListProps) => {
     
     const objectToUpdate = labelData?.objects.find(obj => obj.id === editingObject.id);
     if (!objectToUpdate) return;
-
+    const { updateObject } = labelingStore.getState()
     await updateObject({
       ...objectToUpdate,
       label: editingObject.label.trim()

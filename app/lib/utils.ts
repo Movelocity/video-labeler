@@ -18,11 +18,13 @@ export const randomColor = () => {
  * 2. 如果输入是 string，则直接截取前 7 位
  */
 export const safeTimeKey = (time: number | string): string => {
+  let timeStr: string;
   if (typeof time === 'number') {
-    return time.toString().slice(0, 7)
+    timeStr = time.toString();
   } else {
-    return time.slice(0, 7)
+    timeStr = time;
   }
+  return timeStr.padEnd(7, '0');
 }
 
 /**自动生成id*/
