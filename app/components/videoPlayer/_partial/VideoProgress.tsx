@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { second2time } from '@/lib/utils';
 import { TbKeyframeFilled } from "react-icons/tb";
 import { useLabelingStore, useStore, getActiveObjectData } from '@/components/labeling/store';
+import { TIME_DIFF_THRESHOLD } from "@/lib/constants"
 
 interface VideoProgressProps {
   duration: number;
@@ -30,8 +31,24 @@ const VideoProgress = ({
     
     const rect = progressBarRef.current.getBoundingClientRect();
     const x = clientX - rect.left;
+    // progress in (0, 1)
     const progress = Math.max(0, Math.min(1, x / rect.width));
-    onProgressChange(progress);
+
+    // 根据 TIME_DIFF_THRESHOLD 尝试吸附到一个附近的 keyframe, frame key value in (0, 1)
+    if (activeObjData && activeObjData.timeline) {
+      const frameKeys = Object.keys(activeObjData.timeline).map(Number);
+      console.log(frameKeys)
+      const closestFrame = frameKeys.reduce((prev, curr) => {
+        return Math.abs(curr - progress) < Math.abs(prev - progress) ? curr : prev;
+      });
+      const diff = Math.abs(closestFrame - progress);
+      console.log(`diff: ${diff}`);
+      if (diff < TIME_DIFF_THRESHOLD) {
+        onProgressChange(closestFrame);
+      } else {
+        onProgressChange(progress);
+      }
+    }
   };
 
   return (

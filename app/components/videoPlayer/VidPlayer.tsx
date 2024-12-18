@@ -29,6 +29,7 @@ export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_path, 
   const videoPlayer = useVideoPlayer(videoService.getVideoUrl(video_path, label_path));
   const labelingStore = useLabelingStore()
   const setVideoProgress = useStore(state => state.setVideoProgress)
+  const videoProgress = useStore(state => state.videoProgress)
   // const { setVideoProgress, setLabelPath, setVideoPath } = useLabeling()
 
   useEffect(()=>{
@@ -54,11 +55,11 @@ export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_path, 
   const videoSize = calculateVideoSize();
 
   // const progressBarRef = useRef<HTMLDivElement>(null);
-  const [activeProgress, setActiveProgress] = useState(0);
+  // const [activeProgress, setActiveProgress] = useState(0);
   
   const updateProgressView = useCallback((fraction:number)=> {
     videoPlayer.seekTo(fraction);
-    setActiveProgress(fraction);
+    // setActiveProgress(fraction);
   }, [videoPlayer])
 
   // const updateProgress = useCallback((clientX:number)=> {
@@ -70,9 +71,9 @@ export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_path, 
   //   updateProgressView(fraction);
   // }, [updateProgressView])
 
-  useEffect(() => {
-    setActiveProgress(videoPlayer.progress);
-  }, [videoPlayer.progress]);
+  // useEffect(() => {
+  //   setActiveProgress(videoPlayer.progress);
+  // }, [videoPlayer.progress]);
 
   const [hasWindow, setHasWindow] = useState(false);  // 防止在服务端触发渲染
   const hasInit = useRef(false);
@@ -99,7 +100,7 @@ export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_path, 
       const player = videoPlayer.playerRef.current?.getInternalPlayer() as HTMLVideoElement;
       if (player) {
         const progressInRatio = player.currentTime / player.duration;
-        setActiveProgress(progressInRatio);
+        // setActiveProgress(progressInRatio);
         setVideoProgress(progressInRatio)
       }
     }, 30); // 刷新间隔 ms
@@ -149,11 +150,11 @@ export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_path, 
 
         <VideoProgress
           duration={videoPlayer.duration}
-          activeProgress={activeProgress}
+          // activeProgress={activeProgress}
           width={videoSize.width}
           onProgressChange={(progress) => {
             videoPlayer.seekTo(progress);
-            setActiveProgress(progress);
+            // setActiveProgress(progress);
             if(videoPlayer.playing) {
               videoPlayer.togglePlay();
             }
@@ -163,7 +164,7 @@ export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_path, 
         <VideoControls 
           playing={videoPlayer.playing}
           duration={videoPlayer.duration}
-          currentTime={videoPlayer.duration * activeProgress}
+          currentTime={videoPlayer.duration * videoProgress}
           onTogglePlay={videoPlayer.togglePlay}
         />
       </div>
