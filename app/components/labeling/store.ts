@@ -349,8 +349,8 @@ export const getCurrentBoxes = (state: LabelingState): AnchorBox[] => {
       const t2 = timePoints[startIdx + 1]
       const box1 = object.timeline[safeTimeKey(t1)]
       const box2 = object.timeline[safeTimeKey(t2)]
-      console.log("t1: ", safeTimeKey(t1), "t2: ", safeTimeKey(t2))
-      console.log("box1: ", box1, "box2: ", box2)
+      // console.log("t1: ", safeTimeKey(t1), "t2: ", safeTimeKey(t2))
+      // console.log("box1: ", box1, "box2: ", box2)
       const ratio = (state.videoProgress - t1) / (t2 - t1)
       const interpolatedBox: AnchorBox = {
         sx: box1.sx + (box2.sx - box1.sx) * ratio,

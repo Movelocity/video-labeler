@@ -11,17 +11,21 @@ interface KeyFrameListProps {
 }
 
 const KeyFrameList = ({ timeline, color, onKeyFrameClick }: KeyFrameListProps) => {
+  const videoProgress = useStore(state => state.videoProgress)
   return (
-    <div className="h-8 bg-slate-900 relative">
-      {Object.entries(timeline).sort().map(([frame, data]) => {
-        const position = parseFloat(frame) * 100;
-        return (
+    <div className="h-12 bg-slate-900 relative">
+      {/** progress hint */}
+      <div
+        className="absolute w-0.5 h-full bg-emerald-500"
+        style={{ left: `${videoProgress*100}%` }}
+      ></div>
+      {Object.entries(timeline).sort().map(([frame, data]) => (
           <span
             key={frame}
             onClick={() => onKeyFrameClick(frame)}
-            className="absolute flex items-center justify-center w-8 h-8 -ml-4 cursor-pointer"
+            className="absolute flex items-center justify-center w-8 h-8 -ml-4 mt-4 cursor-pointer"
             style={{ 
-              left: `${position}%`,
+              left: `${parseFloat(frame) * 100}%`,
               backgroundColor: `${color}20`, 
               color: color || randomColor() 
             }}
@@ -29,8 +33,8 @@ const KeyFrameList = ({ timeline, color, onKeyFrameClick }: KeyFrameListProps) =
           >
             <TbKeyframeFilled className="text-xl brightness-50 hover:filter-none" />
           </span>
-        );
-      })}
+        )
+      )}
     </div>
   );
 };
