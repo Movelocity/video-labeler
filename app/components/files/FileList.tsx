@@ -18,25 +18,26 @@ export const FileList = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const loadFiles = async (path: string) => {
-    if(filesInfo.length > 0) return
-    setIsLoading(true)
-    setError(null)
-    
-    try {
-      const files = await fetchFiles(path)
-      setFilesInfo(files)
-    } catch (error) {
-      setError('Failed to load files. Please try again.')
-      console.error('Error:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  
 
   useEffect(() => {
+    const loadFiles = async (path: string) => {
+      if(filesInfo.length > 0) return
+      setIsLoading(true)
+      setError(null)
+      
+      try {
+        const files = await fetchFiles(path)
+        setFilesInfo(files)
+      } catch (error) {
+        setError('Failed to load files. Please try again.')
+        console.error('Error:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
     loadFiles(directory)
-  }, [loadFiles, directory])
+  }, [directory])
 
   if (isLoading) {
     return (

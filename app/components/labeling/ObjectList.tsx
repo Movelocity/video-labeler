@@ -1,11 +1,7 @@
 import { useMemo, useState } from 'react';
 import { autoIncrementId, randomColor } from '@/lib/utils';
-// import { useLabeling } from '@/components/labeling/hooks/useLabeling';
 import { useLabelingStore, useStore } from '@/components/labeling/store';
-
-import { KeyFrameViewer } from '@/components/labeling/KeyFrameViewer';
 import cn from 'classnames';
-// import { PencilIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { FaPlus, FaPencilAlt } from "react-icons/fa";
 
 interface ObjectWithColor {
@@ -19,7 +15,7 @@ interface ObjectItemProps {
   isSelected: boolean;
   isActive: boolean;
   onSelect: () => void;
-  onActivate: () => void;
+  onEdit: () => void;
 }
 
 const ObjectItem = ({ 
@@ -27,24 +23,22 @@ const ObjectItem = ({
   isSelected, 
   isActive, 
   onSelect, 
-  // onActivate,
   onEdit 
-}: ObjectItemProps & { onEdit: () => void }) => {
+}: ObjectItemProps) => {
   const handleClick = () => {
     onSelect();
   };
-
   return (
     <li 
       className={cn(
-        'flex flex-row items-center rounded-lg pl-3 transition-colors group',
+        'flex flex-row items-center rounded-lg pl-3 transition-colors group cursor-pointer',
         isActive ? 'bg-slate-800' : 'bg-slate-800/50',
-        isSelected ? 'hover:bg-slate-700 cursor-pointer' : ''
+        isSelected ? 'hover:bg-slate-700 ' : ''
       )}
       onClick={handleClick}
     >
       <div 
-        className="w-2 h-2 rounded-full p-3"
+        className="w-2 h-2 rounded-full p-2"
         style={{ backgroundColor: isSelected? object.color : "#333" }}
       />
       <div 
@@ -71,15 +65,6 @@ const ObjectItem = ({
 };
 
 export const ObjectList = () => {
-  // const { 
-  //   labelData,
-  //   selectedIds,
-  //   activeObjId,
-  //   toggleObjectSelection,
-  //   setActiveObjId,
-  //   addObject,
-  //   updateObject
-  // } = useLabeling();
   const labelingStore = useLabelingStore()
   const labelData = useStore(state => state.labelData);
   const selectedIds = useStore(state => state.selectedIds);
@@ -89,8 +74,7 @@ export const ObjectList = () => {
   const [newObjectLabel, setNewObjectLabel] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   
-  const objectsWithColors = useMemo(() => {
-    
+  const objectsWithColor = useMemo(() => {
     return labelData?.objects.map(obj => ({
       ...obj,
       color: obj.color || randomColor(),
@@ -129,16 +113,12 @@ export const ObjectList = () => {
     
     const objectToUpdate = labelData?.objects.find(obj => obj.id === editingObject.id);
     if (!objectToUpdate) return;
-    const { updateObject } = labelingStore.getState()
-    await updateObject({
-      ...objectToUpdate,
-      label: editingObject.label.trim()
-    });
-    
+    const { renameObj } = labelingStore.getState()
+    await renameObj(editingObject.id, editingObject.label.trim());
     setEditingObject(null);
   };
 
-  if (objectsWithColors?.length === 0 && !isCreating) {
+  if (objectsWithColor?.length === 0 && !isCreating) {
     return (
       <div className="flex flex-col gap-4 w-[30%] ml-4">
         <div className="p-4 text-slate-400 text-center">
@@ -197,14 +177,13 @@ export const ObjectList = () => {
       )}
 
       <ul className="space-y-2 p-2">
-        {objectsWithColors?.map((obj) => (
+        {objectsWithColor?.map((obj) => (
           <ObjectItem
             key={obj.id}
             object={obj}
             isSelected={selectedIds.includes(obj.id)}
             isActive={activeObjId === obj.id}
             onSelect={() => handleObjectSelect(obj.id)}
-            onActivate={() => {}}
             onEdit={() => setEditingObject({ id: obj.id, label: obj.label })}
           />
         ))}
@@ -248,8 +227,6 @@ export const ObjectList = () => {
           </div>
         </div>
       )}
-
-      {/* <KeyFrameViewer jump_to_frame={to_progress} /> */}
     </div>
   );
 };

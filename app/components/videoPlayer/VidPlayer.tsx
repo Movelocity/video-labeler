@@ -1,12 +1,11 @@
 'use client'
-import { useEffect, useState, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { useEffect, useState, useRef, useCallback, FC } from 'react';
 import ReactPlayer from 'react-player'
 import { useWindowDimensions } from '@/components/videoPlayer/hooks/useWindowDimensions';
 import { useVideoPlayer } from '@/components/videoPlayer/hooks/useVideoPlayer';
 import { useKeyboardShortcuts } from '@/components/videoPlayer/hooks/useKeyboardShortcuts';
 import { VideoControls } from '@/components/videoPlayer/_partial/VideoControls';
 import { videoService } from '@/service/video';
-// import { useLabeling } from '@/components/labeling/hooks/useLabeling';
 import { useLabelingStore, useStore } from '@/components/labeling/store';
 import VideoProgress from '@/components/videoPlayer/_partial/VideoProgress';
 import { CanvasLayer } from '@/components/BoxesLayer/CanvasLayer';
@@ -18,13 +17,7 @@ interface PlayerProps {
   label_path: string;
 }
 
-export interface VidPlayerHandle {
-  seekTo: (fraction: number) => void;
-  getCurrentTime: () => number;
-  getDuration: () => number;
-}
-
-export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_path, label_path}, ref) => {
+export const VidPlayer: FC<PlayerProps> = (({video_path, label_path}) => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const videoPlayer = useVideoPlayer(videoService.getVideoUrl(video_path, label_path));
   const labelingStore = useLabelingStore()
@@ -53,27 +46,12 @@ export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_path, 
     return { width: videoWidth, height: videoHeight };
   }, [windowWidth, windowHeight, videoPlayer.videoShapeRatio]);
   const videoSize = calculateVideoSize();
-
-  // const progressBarRef = useRef<HTMLDivElement>(null);
-  // const [activeProgress, setActiveProgress] = useState(0);
   
   const updateProgressView = useCallback((fraction:number)=> {
     videoPlayer.seekTo(fraction);
     // setActiveProgress(fraction);
   }, [videoPlayer])
 
-  // const updateProgress = useCallback((clientX:number)=> {
-  //   if (!progressBarRef.current) return;
-  //   const rect = progressBarRef.current.getBoundingClientRect();
-  //   const x = clientX - rect.left;
-  //   const width = rect.width;
-  //   const fraction = Math.min(Math.max(x / width, 0), 1);
-  //   updateProgressView(fraction);
-  // }, [updateProgressView])
-
-  // useEffect(() => {
-  //   setActiveProgress(videoPlayer.progress);
-  // }, [videoPlayer.progress]);
 
   const [hasWindow, setHasWindow] = useState(false);  // 防止在服务端触发渲染
   const hasInit = useRef(false);
@@ -109,19 +87,19 @@ export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_path, 
   }, [videoPlayer.playing]);
 
   // 暴露方法给外部
-  useImperativeHandle(ref, () => ({
-    seekTo: (fraction: number) => {
-      updateProgressView(fraction);
-      setVideoProgress(fraction)
-    },
-    getCurrentTime: () => {
-      const player = videoPlayer.playerRef.current?.getInternalPlayer() as HTMLVideoElement;
-      return player ? player.currentTime : 0;
-    },
-    getDuration: () => {
-      return videoPlayer.duration;
-    }
-  }));
+  // useImperativeHandle(ref, () => ({
+  //   seekTo: (fraction: number) => {
+  //     updateProgressView(fraction);
+  //     setVideoProgress(fraction)
+  //   },
+  //   getCurrentTime: () => {
+  //     const player = videoPlayer.playerRef.current?.getInternalPlayer() as HTMLVideoElement;
+  //     return player ? player.currentTime : 0;
+  //   },
+  //   getDuration: () => {
+  //     return videoPlayer.duration;
+  //   }
+  // }));
 
   return (
     <div className='flex flex-row'>
@@ -171,5 +149,3 @@ export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_path, 
     </div>
   );
 })
-
-VidPlayer.displayName = 'VidPlayer';

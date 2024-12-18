@@ -31,13 +31,7 @@ type StoreActions = {
   setLabelData: (data: LabelDataV2) => void
   setVideoProgress: (progress: number) => void
   setRenderedBoxes: (boxes: AnchorBox[]) => void
-  setSearchReq: (searchReq: string) => void
-  setSearchRes: (searchRes: string) => void
-  storeSearchReq: (text: string) => void
-  storeSearchRes: (text: string) => void
-  setGlobalSearchParams: (params: Record<string, string>) => void
-  storeGlobalSearchParams: (params: Record<string, string>) => void
-  storeQueryCardsStr: (queryCardsStr: string) => void
+
 
   // Selection operations
   toggleObjectSelection: (objId: string) => void
@@ -46,7 +40,7 @@ type StoreActions = {
   // Core data operations
   loadLabelData: (video_path: string, label_path: string) => Promise<void>
   addObject: (obj: LabelObject) => Promise<void>
-  updateObject: (obj: LabelObject) => Promise<void>
+  renameObj: (objId: string, newName: string) => Promise<void>
   removeObject: (objId: string) => Promise<void>
   addKeyFrame: (objId: string, time: number) => void
   saveKeyFrame: (objId: string, time: number, box: AnchorBox) => Promise<void>
@@ -95,33 +89,6 @@ export const createLabelingStore = () => {
       setLabelData: (data) => set({ labelData: data }),
       setVideoProgress: (progress) => set({ videoProgress: progress }),
       setRenderedBoxes: (boxes) => set({ renderedBoxes: boxes }),
-      setSearchReq: searchReq => set(() => ({ searchReq })),
-      setSearchRes: searchRes => set(() => ({ searchRes })),
-      storeSearchReq: (searchReq: string) => {
-        set((state) => {
-          const newState = { ...state, searchReq }
-          return newState
-        })
-      },
-      storeSearchRes: (searchRes: string) => {
-        set((state) => {
-          const newState = { ...state, searchRes }
-          return newState
-        })
-      },
-      setGlobalSearchParams: (params: Record<string, string>) => set(() => ({ gSearchParams: params })),
-      storeGlobalSearchParams: (params) => {
-        set((state) => {
-          const newState = { ...state, gSearchParams: params }
-          return newState
-        })
-      },
-      storeQueryCardsStr: (queryCardsStr) => {
-        set((state) => {
-          const newState = { ...state, queryCardsStr }
-          return newState
-        })
-      },
 
       // Selection operations
       toggleObjectSelection: (objId) => {
@@ -170,17 +137,18 @@ export const createLabelingStore = () => {
         }
       },
 
-      updateObject: async (tgObj: LabelObject) => {
+      renameObj: async (objId: string, newName: string) => {
         const { labelData, video_path, label_path } = get()
         if (!labelData) return
 
-        const objectToUpdate = labelData.objects.find(obj => obj.id === tgObj.id)
+        const objectToUpdate = labelData.objects.find(obj => obj.id === objId)
         if (!objectToUpdate) return
 
         const updatedObject = {
           ...objectToUpdate,
-          ...tgObj
+          label: newName
         }
+
         try {
           await labelingService.saveLabelingV2(video_path, [updatedObject], label_path)
         } catch (error) {
@@ -219,12 +187,16 @@ export const createLabelingStore = () => {
 
         const objectToUpdate = labelData.objects.find(obj => obj.id === objId)
         if (!objectToUpdate) return
-        console.log("save: ", safeTimeKey(time))
+        console.log("add: ", safeTimeKey(time))
+        // try to get the last of timeline key frame as default new frame, else use {sx: 0.4, sy: 0.4, w:0.2, h:0.14, label:objectToUpdate.label}
+        const sortedTimelineKeys = Object.keys(objectToUpdate.timeline).sort((a, b) => Number(a) - Number(b))
+        const lastKeyFrame = sortedTimelineKeys[sortedTimelineKeys.length - 1]
+        const newBox = lastKeyFrame ? objectToUpdate.timeline[lastKeyFrame] : {sx: 0.4, sy: 0.4, w:0.2, h:0.14, label:objectToUpdate.label}
         const updatedObject = {
           ...objectToUpdate,
           timeline: {
             ...objectToUpdate.timeline,
-            [safeTimeKey(time)]: {sx: 0.4, sy: 0.4, w:0.2, h:0.14, label:objectToUpdate.label}
+            [safeTimeKey(time)]: newBox
           }
         }
         const newLabelData = {
@@ -305,7 +277,10 @@ export const createLabelingStore = () => {
         if (!labelData) return
         const objectToUpdate = labelData.objects.find(obj => obj.id === objId)
         if (!objectToUpdate) return
-        const box = objectToUpdate.timeline[safeTimeKey(fromTime)]
+        const keyFrame = closeToKeyFrame(objectToUpdate.timeline, toTime)
+        if (!keyFrame) return
+    
+        const box = objectToUpdate.timeline[keyFrame]
         if (!box) return
         delete objectToUpdate.timeline[safeTimeKey(fromTime)]
         objectToUpdate.timeline[safeTimeKey(toTime)] = box

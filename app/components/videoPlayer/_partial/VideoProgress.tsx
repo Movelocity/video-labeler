@@ -34,7 +34,7 @@ const VideoProgress = ({
     const progress = Math.max(0, Math.min(1, x / rect.width));
 
     // 根据 TIME_DIFF_THRESHOLD 尝试吸附到一个附近的 keyframe, frame key value in (0, 1)
-    if (activeObjData && activeObjData.timeline) {
+    if (activeObjData && activeObjData.timeline && Object.keys(activeObjData.timeline).length > 0) {
       const keyframe = closeToKeyFrame(activeObjData.timeline, progress);
       if(keyframe !== ""){
         onProgressChange(parseFloat(keyframe));

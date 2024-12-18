@@ -62,11 +62,12 @@ const readAndMigrateLabelData = (filePath: string): LabelDataV2 => {
       return migratedData;
     }
 
-    data.objects.forEach((obj: LabelObject) => {
+    data.objects.forEach((obj: LabelObject) => {  // 确保键名不会变成 0.0123901238194187, 而是总共只有7个字符 0.01239
       obj.timeline = Object.fromEntries(
-        Object.entries(obj.timeline).map(([time, box]) => [safeTimeKey(time), box])
+        Object.entries(obj.timeline).map(([time, box]) => [safeTimeKey(time), {...box, label: obj.label}])
       );
     })
+    data.metadata.nextId = data.metadata.nextId??data.objects.length + 1;
     
     return data as LabelDataV2;
   }
@@ -136,12 +137,12 @@ function handleReadV2(searchParams: URLSearchParams) {
   }
 }
 
-/**写入标签数据*/
+/** 写入标签数据, 采用合并的方式写入，允许只提交一些 objects，不用发送全部 objects */
 async function handleWriteV2(req: NextRequest, searchParams: URLSearchParams) {
   const object_updates = await req.json();
   const video_path = searchParams.get('video_path') ?? "";
   const labelFilePath = getLabelFilePath(video_path, searchParams.get('label_path'));
-
+  // console.log("写入标签数据: ", object_updates)
   try {
     ensureCacheDirectory(video_path);
     const data = readAndMigrateLabelData(labelFilePath);
@@ -155,10 +156,12 @@ async function handleWriteV2(req: NextRequest, searchParams: URLSearchParams) {
           ...data.objects[existingIndex].timeline,
           ...update.timeline
         };
+        data.objects[existingIndex].label = update.label;
       } else {
         data.objects.push(update);
       }
     });
+    data.metadata.nextId = data.objects.length + 1;
     
     fs.writeFileSync(labelFilePath, JSON.stringify(data, null, 2));
     return NextResponse.json(
