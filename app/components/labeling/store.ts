@@ -5,7 +5,7 @@ import { LabelingContext } from './context'
 import { LabelDataV2, AnchorBox, LabelObject } from '@/lib/types'
 import { labelingService } from '@/service/labeling'
 import { TIME_DIFF_THRESHOLD } from '@/lib/constants'
-import { safeTimeKey } from '@/lib/utils'
+import { safeTimeKey, closeToKeyFrame } from '@/lib/utils'
 
 // Core state types
 type StoreStateValues = {
@@ -48,6 +48,7 @@ type StoreActions = {
   addObject: (obj: LabelObject) => Promise<void>
   updateObject: (obj: LabelObject) => Promise<void>
   removeObject: (objId: string) => Promise<void>
+  addKeyFrame: (objId: string, time: number) => void
   saveKeyFrame: (objId: string, time: number, box: AnchorBox) => Promise<void>
   removeKeyFrame: (objId: string, time: number) => Promise<void>
   moveKeyFrame: (objId: string, fromTime: number, toTime: number) => Promise<void>
@@ -205,34 +206,58 @@ export const createLabelingStore = () => {
         try {
           const timePoints = Object.keys(objectToDelete.timeline).map(t => parseFloat(t))
           for (const time of timePoints) {
-            await labelingService.deleteLabelingV2(video_path, objId, time, label_path)
+            await labelingService.deleteLabelingV2(video_path, objId, safeTimeKey(time), label_path)
           }
         } catch (error) {
           console.error('Error deleting object:', error)
           set({ labelData })
         }
       },
+      addKeyFrame: (objId: string, time: number) => {
+        const { labelData } = get()
+        if (!labelData) return
 
+        const objectToUpdate = labelData.objects.find(obj => obj.id === objId)
+        if (!objectToUpdate) return
+        console.log("save: ", safeTimeKey(time))
+        const updatedObject = {
+          ...objectToUpdate,
+          timeline: {
+            ...objectToUpdate.timeline,
+            [safeTimeKey(time)]: {sx: 0.4, sy: 0.4, w:0.2, h:0.14, label:objectToUpdate.label}
+          }
+        }
+        const newLabelData = {
+          ...labelData,
+          objects: labelData.objects.map(obj => obj.id === objId ? updatedObject : obj)
+        }
+
+        set({ labelData: newLabelData })
+      },
       saveKeyFrame: async (objId: string, time: number, box: AnchorBox) => {
         const { labelData, video_path, label_path } = get()
         if (!labelData) return
 
         const objectToUpdate = labelData.objects.find(obj => obj.id === objId)
         if (!objectToUpdate) return
+        const keyFrame = closeToKeyFrame(objectToUpdate.timeline, time)
 
+        const frameToSave = keyFrame ? keyFrame : safeTimeKey(time)
+
+        console.log("save: ", frameToSave)
+
+        // 如果有接近的帧，则更新该帧
         const updatedObject = {
           ...objectToUpdate,
           timeline: {
             ...objectToUpdate.timeline,
-            [safeTimeKey(time)]: box
+            [frameToSave]: box
           }
         }
-
         const newLabelData = {
           ...labelData,
-          objects: labelData.objects.map(obj => obj.id === objId ? updatedObject : obj)
+          objects: labelData.objects.map(obj =>obj.id === objId ? updatedObject : obj)
         }
-
         set({ labelData: newLabelData })
 
         try {
@@ -241,6 +266,7 @@ export const createLabelingStore = () => {
           console.error('Error saving keyframe:', error)
           set({ labelData })
         }
+        
       },
 
       removeKeyFrame: async (objId: string, time: number) => {
@@ -250,7 +276,10 @@ export const createLabelingStore = () => {
         const objectToUpdate = labelData.objects.find(obj => obj.id === objId)
         if (!objectToUpdate) return
 
-        const { [safeTimeKey(time)]: _, ...remainingTimeline } = objectToUpdate.timeline
+        const keyFrame = closeToKeyFrame(objectToUpdate.timeline, time)
+        if(!keyFrame) return
+        const { [keyFrame]: _, ...remainingTimeline } = objectToUpdate.timeline
+        console.log("del: ", keyFrame)
         const updatedObject = {
           ...objectToUpdate,
           timeline: remainingTimeline
@@ -264,7 +293,7 @@ export const createLabelingStore = () => {
         set({ labelData: newLabelData })
 
         try {
-          await labelingService.deleteLabelingV2(video_path, objId, time, label_path)
+          await labelingService.deleteLabelingV2(video_path, objId, keyFrame, label_path)
         } catch (error) {
           console.error('Error deleting keyframe:', error)
           set({ labelData })

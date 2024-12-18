@@ -1,4 +1,5 @@
-import { LabelDataV1, LabelDataV2 } from "./types";
+import { LabelDataV1, LabelDataV2, TimelineEntry } from "./types";
+import { TIME_DIFF_THRESHOLD } from "./constants";
 
 /** 将秒数转换为时间格式*/
 export const second2time = (seconds: number) => {
@@ -22,12 +23,31 @@ export const safeTimeKey = (time: number | string): string => {
   if (typeof time === 'number') {
     timeStr = time.toString();
   } else {
-    timeStr = time;
+    timeStr = time
   }
+  timeStr = timeStr.slice(0, 7);
   return timeStr.padEnd(7, '0');
 }
 
 /**自动生成id*/
 export const autoIncrementId = (data: LabelDataV2|LabelDataV1) => {
   return (data.metadata.nextId = (data.metadata.nextId || 0) + 1).toString();
+}
+
+/** 查找时间戳最接近的帧 */
+export const closeToKeyFrame = (timeline: TimelineEntry, time_point: number): string => {
+  const frameKeys = Object.keys(timeline).map(Number);
+  // console.log(frameKeys)
+  const closestFrame = frameKeys.reduce((prev, curr) => {
+    return Math.abs(curr - time_point) < Math.abs(prev - time_point) ? curr : prev;
+  });
+  const diff = Math.abs(closestFrame - time_point);
+  // console.log(`diff: ${diff}`);
+  if (diff < TIME_DIFF_THRESHOLD) {
+    // console.log(`${diff} < ${TIME_DIFF_THRESHOLD} closest frame: ${safeTimeKey(closestFrame)}`);
+    return safeTimeKey(closestFrame)
+  } else {
+    // console.log("return empty string")
+    return ""
+  }
 }

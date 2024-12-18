@@ -61,6 +61,12 @@ const readAndMigrateLabelData = (filePath: string): LabelDataV2 => {
       fs.writeFileSync(filePath, JSON.stringify(migratedData, null, 2));
       return migratedData;
     }
+
+    data.objects.forEach((obj: LabelObject) => {
+      obj.timeline = Object.fromEntries(
+        Object.entries(obj.timeline).map(([time, box]) => [safeTimeKey(time), box])
+      );
+    })
     
     return data as LabelDataV2;
   }

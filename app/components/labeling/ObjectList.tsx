@@ -44,7 +44,7 @@ const ObjectItem = ({
       onClick={handleClick}
     >
       <div 
-        className="w-4 h-4 rounded-full p-3"
+        className="w-2 h-2 rounded-full p-3"
         style={{ backgroundColor: isSelected? object.color : "#333" }}
       />
       <div 
@@ -70,11 +70,7 @@ const ObjectItem = ({
   );
 };
 
-interface ObjectListProps {
-  to_progress: (frame: number) => void;
-}
-
-export const ObjectList = ({ to_progress }: ObjectListProps) => {
+export const ObjectList = () => {
   // const { 
   //   labelData,
   //   selectedIds,
@@ -178,21 +174,22 @@ export const ObjectList = ({ to_progress }: ObjectListProps) => {
             value={newObjectLabel}
             onChange={(e) => setNewObjectLabel(e.target.value)}
             placeholder="输入对象标签"
-            className="flex-1 px-2 py-1 bg-slate-700 rounded-md text-slate-200 outline-none focus:ring-2 focus:ring-sky-500"
+            className="flex-1 px-2 py-0 w-36 bg-slate-700 rounded-md text-slate-200 outline-none focus:ring-2 focus:ring-sky-500"
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleCreateObject();
               if (e.key === 'Escape') setIsCreating(false);
             }}
+            spellCheck={false}
           />
           <button
             onClick={handleCreateObject}
-            className="px-3 py-1 rounded-md bg-sky-600 hover:bg-sky-500 text-white"
+            className="px-2 py-1 rounded-md bg-sky-600 hover:bg-sky-500 text-white text-sm"
           >
             确定
           </button>
           <button
             onClick={() => setIsCreating(false)}
-            className="px-3 py-1 rounded-md hover:bg-slate-700 text-slate-300"
+            className="px-2 py-1 rounded-md hover:bg-slate-700 text-slate-300 text-sm"
           >
             取消
           </button>

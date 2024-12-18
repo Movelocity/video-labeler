@@ -1,7 +1,7 @@
 import { FaPlay, FaPause } from 'react-icons/fa';
 import { second2time } from '@/lib/utils';
 import { RouteBackBtn } from "@/components/RouteBackBtn"
-
+import cn from "classnames"
 import { useLabelingStore, useStore, getActiveObjectData } from '@/components/labeling/store';
 
 
@@ -19,9 +19,11 @@ export const VideoControls = ({
   onTogglePlay
 }: VideoControlsProps) => {
   const labelingStore = useLabelingStore()
-  const addKeyFrame = useStore(state => state.saveKeyFrame)
+  const addKeyFrame = useStore(state => state.addKeyFrame)
+  const saveKeyFrame = useStore(state => state.saveKeyFrame)
   const deleteKeyFrame = useStore(state => state.removeKeyFrame)
   const setVideoProgress = useStore(state => state.setVideoProgress)
+  const activeObjId = useStore(state => state.activeObjId)
 
   const handleAddKeyFrame = () => {
     const { activeObjId, renderedBoxes, videoProgress } = labelingStore.getState()
@@ -29,13 +31,25 @@ export const VideoControls = ({
 
     if(!activeObjId || !activeObjData) return
     const targetBox = renderedBoxes.find(box => box.objId === activeObjId)
-    if(!targetBox) {
-      addKeyFrame(activeObjId, videoProgress, {sx: 0.4, sy: 0.4, w:0.2, h:0.14, label:activeObjData.label})
-      // handleKeyFrameClick(videoProgress.toString());  // refresh keyframe viewer
-    } else{
-      addKeyFrame(activeObjId, videoProgress, {...targetBox, objId: undefined, color: undefined})
+    if(targetBox) {
+      saveKeyFrame(activeObjId, videoProgress, {...targetBox, objId: undefined, color: undefined})
+    } else {
+      addKeyFrame(activeObjId, videoProgress)
     }
     setVideoProgress(videoProgress+0.0000001)
+    setVideoProgress(videoProgress-0.0000001)
+  }
+
+  const handleSaveKeyFrame = async () => {
+    const { activeObjId, renderedBoxes, videoProgress } = labelingStore.getState()
+    const activeObjData = getActiveObjectData(labelingStore.getState())
+
+    if(!activeObjId || !activeObjData) return
+    const targetBox = renderedBoxes.find(box => box.objId === activeObjId)
+    if(targetBox) {
+      await saveKeyFrame(activeObjId, videoProgress, {...targetBox, objId: undefined, color: undefined})
+      setVideoProgress(videoProgress+0.0000001)
+    } 
   }
 
   const handleDeleteKeyFrame = () => {
@@ -61,36 +75,24 @@ export const VideoControls = ({
         </button>
       </div>
 
-      
-
-      {/* <div className='flex items-center space-x-2'>
-        <button 
-          className='flex items-center space-x-1 px-3 py-1.5 bg-zinc-600 hover:bg-zinc-500 rounded-md transition-colors'
-          onClick={onSave}
-          title="保存当前帧的标注 (Ctrl + S)"
-        >
-          <FaSave className="w-4 h-4" />
-          <span>保存帧标注</span>
-        </button>
-
+      <div className={cn("flex flex-row justify-end py-1 mt-2", !activeObjId&&"invisible")}>
         <button
-          className='flex items-center space-x-1 px-3 py-1.5 bg-zinc-600 hover:bg-zinc-500 rounded-md transition-colors'
-          onClick={onDelete}
-          title="删除当前帧的标注"
-        >
-          <FaTrash className="w-4 h-4" />
-          <span>删除帧标注</span>
-        </button>
-      </div> */}
-      <div className="flex flex-row justify-end py-1 mt-2">
-        <button
-          title="在当前播放进度添加|更新关键帧"
+          title="在当前播放进度添加关键帧"
           className="mx-2 px-1 rounded-md bg-green-700 hover:bg-green-800"
           onClick={()=> {
             handleAddKeyFrame()
           }}
         >
-          Add&Save
+          Add
+        </button>
+        <button
+          title="更新关键帧"
+          className="mx-2 px-1 rounded-md bg-green-700 hover:bg-green-800"
+          onClick={()=> {
+            handleSaveKeyFrame()
+          }}
+        >
+          Save
         </button>
         <button
           title="删除当前对应的关键帧"

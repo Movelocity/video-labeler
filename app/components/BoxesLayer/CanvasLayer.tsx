@@ -154,7 +154,7 @@ export const CanvasLayer = ({
 
   /** 鼠标抬起事件 */
   const handleMouseUp = useCallback(() => {
-    console.log('mouse up')
+    // console.log('mouse up')
     isDragging.current = false
     isResizing.current = false
     setCursor('default')

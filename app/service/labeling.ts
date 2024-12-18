@@ -79,7 +79,7 @@ export const labelingService = {
     });
   },
 
-  async deleteLabelingV2(video_path: string, obj_id: string, time: number, label_path?: string): Promise<void> {
+  async deleteLabelingV2(video_path: string, obj_id: string, time: string, label_path?: string): Promise<void> {
     await fetch(`/api/labeling?action=delete&video_path=${video_path}&obj_id=${obj_id}&time=${time}&label_path=${label_path || ''}`, {
       method: 'DELETE'
     });
