@@ -5,14 +5,14 @@ import { useLabelingStore, useStore, getActiveObjectData } from '@/components/la
 
 interface VideoProgressProps {
   duration: number;
-  activeProgress: number;
+  // activeProgress: number;
   width: number;
   onProgressChange: (progress: number) => void;
 }
 
 const VideoProgress = ({
   duration,
-  activeProgress,
+  // activeProgress,
   width,
   onProgressChange
 }: VideoProgressProps) => {
@@ -23,6 +23,8 @@ const VideoProgress = ({
   // const activeObjData = getActiveObjectData();
   const activeObjData = getActiveObjectData(labelingStore.getState())
   const activeObjId = useStore(state => state.activeObjId)
+  const videoProgress = useStore(state => state.videoProgress)
+
   const updateProgress = (clientX: number) => {
     if (!progressBarRef.current) return;
     
@@ -48,27 +50,23 @@ const VideoProgress = ({
         aria-label="Video progress"
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-valuenow={Math.round(activeProgress * 100)}
+        aria-valuenow={Math.round(videoProgress * 100)}
         tabIndex={0}
         onKeyDown={(e) => {
-          if (e.key === 'ArrowRight') onProgressChange(Math.min(1, activeProgress + 0.01));
-          if (e.key === 'ArrowLeft') onProgressChange(Math.max(0, activeProgress - 0.01));
+          if (e.key === 'ArrowRight') onProgressChange(Math.min(1, videoProgress + 0.01));
+          if (e.key === 'ArrowLeft') onProgressChange(Math.max(0, videoProgress - 0.01));
         }}
       >
         <div className='absolute inset-0 bg-slate-900' ref={progressBarRef} />
         <div
           className="absolute w-0.5 h-full bg-emerald-400"
-          style={{ left: `${activeProgress*100}%` }}
+          style={{ left: `${videoProgress*100}%` }}
         ></div>
         
         {/* KeyFrame Markers */}
         {activeObjData && Object.keys(activeObjData.timeline).map((frame) => (
           <span
             key={frame}
-            onClick={(e) => {
-              e.stopPropagation();
-              onProgressChange(parseFloat(frame));
-            }}
             className="absolute flex items-center justify-center w-8 h-8 -ml-4 cursor-pointer top-1"
             style={{ 
               left: `${parseFloat(frame) * 100}%`,

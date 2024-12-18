@@ -1,33 +1,53 @@
-import { FaPlay, FaPause, FaSave, FaTrash } from 'react-icons/fa';
+import { FaPlay, FaPause } from 'react-icons/fa';
 import { second2time } from '@/lib/utils';
-import { useRouter } from 'next/navigation';
+import { RouteBackBtn } from "@/components/RouteBackBtn"
+
+import { useLabelingStore, useStore, getActiveObjectData } from '@/components/labeling/store';
+
 
 type VideoControlsProps = {
   playing: boolean;
   duration: number;
   currentTime: number;
   onTogglePlay: () => void;
-  onSave?: () => void;
-  onDelete?: () => void;
 };
 
 export const VideoControls = ({
   playing,
   duration,
   currentTime,
-  onTogglePlay,
-  onSave,
-  onDelete
+  onTogglePlay
 }: VideoControlsProps) => {
-  const router = useRouter();
+  const labelingStore = useLabelingStore()
+  const addKeyFrame = useStore(state => state.saveKeyFrame)
+  const deleteKeyFrame = useStore(state => state.removeKeyFrame)
+  const setVideoProgress = useStore(state => state.setVideoProgress)
+
+  const handleAddKeyFrame = () => {
+    const { activeObjId, renderedBoxes, videoProgress } = labelingStore.getState()
+    const activeObjData = getActiveObjectData(labelingStore.getState())
+
+    if(!activeObjId || !activeObjData) return
+    const targetBox = renderedBoxes.find(box => box.objId === activeObjId)
+    if(!targetBox) {
+      addKeyFrame(activeObjId, videoProgress, {sx: 0.4, sy: 0.4, w:0.2, h:0.14, label:activeObjData.label})
+      // handleKeyFrameClick(videoProgress.toString());  // refresh keyframe viewer
+    } else{
+      addKeyFrame(activeObjId, videoProgress, {...targetBox, objId: undefined, color: undefined})
+    }
+    setVideoProgress(videoProgress+0.0000001)
+  }
+
+  const handleDeleteKeyFrame = () => {
+    const { activeObjId, videoProgress } = labelingStore.getState()
+    if(!activeObjId) return
+    deleteKeyFrame(activeObjId, videoProgress)
+    setVideoProgress(videoProgress+0.0000001)
+  }
+
   return (
     <div className='flex flex-row justify-between p-3 mx-auto items-center space-x-3 w-full'>
-      <div 
-        className='text-sm text-slate-300 min-w-[80px] cursor-pointer hover:text-slate-400 transition-colors'
-        onClick={() => router.back()}
-      >
-        返回上一页面
-      </div>
+      <RouteBackBtn />
       <div className='flex items-center space-x-2'>
         <button 
           className='p-3 rounded-full bg-green-600 hover:bg-green-500 transition-colors'
@@ -41,9 +61,7 @@ export const VideoControls = ({
         </button>
       </div>
 
-      <div className='text-sm text-slate-300 min-w-[80px]'>
-        {second2time(currentTime)} / {second2time(duration)}
-      </div>
+      
 
       {/* <div className='flex items-center space-x-2'>
         <button 
@@ -64,6 +82,32 @@ export const VideoControls = ({
           <span>删除帧标注</span>
         </button>
       </div> */}
+      <div className="flex flex-row justify-end py-1 mt-2">
+        <button
+          title="在当前播放进度添加|更新关键帧"
+          className="mx-2 px-1 rounded-md bg-green-700 hover:bg-green-800"
+          onClick={()=> {
+            handleAddKeyFrame()
+          }}
+        >
+          Add&Save
+        </button>
+        <button
+          title="删除当前对应的关键帧"
+          className="mx-2 px-1 rounded-md bg-rose-700 hover:bg-rose-800"
+          onClick={()=> {
+            handleDeleteKeyFrame()
+          }}
+        >
+          Delete
+        </button>
+      </div>
+
+      <div className='text-sm text-slate-300 min-w-[80px]'>
+        {second2time(currentTime)} / {second2time(duration)}
+      </div>
+
+
     </div>
   );
 }; 

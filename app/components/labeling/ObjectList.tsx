@@ -199,7 +199,7 @@ export const ObjectList = ({ to_progress }: ObjectListProps) => {
         </div>
       )}
 
-      <ul className="space-y-2 max-h-[400px] overflow-y-scroll p-2">
+      <ul className="space-y-2 p-2">
         {objectsWithColors?.map((obj) => (
           <ObjectItem
             key={obj.id}
@@ -252,7 +252,7 @@ export const ObjectList = ({ to_progress }: ObjectListProps) => {
         </div>
       )}
 
-      <KeyFrameViewer jump_to_frame={to_progress} />
+      {/* <KeyFrameViewer jump_to_frame={to_progress} /> */}
     </div>
   );
 };
