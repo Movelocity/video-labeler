@@ -160,7 +160,7 @@ export const ObjectList = ({ to_progress }: ObjectListProps) => {
   }
 
   return (
-    <div className="flex flex-col gap-4 w-[30%] ml-4">
+    <div className="flex flex-col gap-4 w-[30%] ml-4 bg-slate-900 rounded-lg p-4">
       <div className="flex justify-between items-center">
         <h3 className="text-slate-200 font-medium">标注对象</h3>
         <button

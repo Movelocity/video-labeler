@@ -53,7 +53,7 @@ export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_path, 
   }, [windowWidth, windowHeight, videoPlayer.videoShapeRatio]);
   const videoSize = calculateVideoSize();
 
-  const progressBarRef = useRef<HTMLDivElement>(null);
+  // const progressBarRef = useRef<HTMLDivElement>(null);
   const [activeProgress, setActiveProgress] = useState(0);
   
   const updateProgressView = useCallback((fraction:number)=> {
@@ -61,14 +61,14 @@ export const VidPlayer = forwardRef<VidPlayerHandle, PlayerProps>(({video_path, 
     setActiveProgress(fraction);
   }, [videoPlayer])
 
-  const updateProgress = useCallback((clientX:number)=> {
-    if (!progressBarRef.current) return;
-    const rect = progressBarRef.current.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const width = rect.width;
-    const fraction = Math.min(Math.max(x / width, 0), 1);
-    updateProgressView(fraction);
-  }, [updateProgressView])
+  // const updateProgress = useCallback((clientX:number)=> {
+  //   if (!progressBarRef.current) return;
+  //   const rect = progressBarRef.current.getBoundingClientRect();
+  //   const x = clientX - rect.left;
+  //   const width = rect.width;
+  //   const fraction = Math.min(Math.max(x / width, 0), 1);
+  //   updateProgressView(fraction);
+  // }, [updateProgressView])
 
   useEffect(() => {
     setActiveProgress(videoPlayer.progress);

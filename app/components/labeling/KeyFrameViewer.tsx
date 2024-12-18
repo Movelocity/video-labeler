@@ -99,11 +99,11 @@ export const KeyFrameViewer = ({ className, jump_to_frame }: KeyFrameViewerProps
           {activeObjData.label} id: {activeObjId}
         </span>
       </span>
-      <KeyFrameList // 使用新组件
+      {/* <KeyFrameList // 使用新组件
         timeline={activeObjData.timeline}
         color={activeObjData.color}
         onKeyFrameClick={handleKeyFrameClick}
-      />
+      /> */}
       <div className="flex flex-row justify-end py-1 mt-2">
         <button
           title="在当前播放进度添加|更新关键帧"
@@ -125,11 +125,11 @@ export const KeyFrameViewer = ({ className, jump_to_frame }: KeyFrameViewerProps
         </button>
       </div>
       
-      <div className='px-2 m-1 p-1 rounded-sm bg-slate-900 overflow-y-scroll'>
+      {/* <div className='px-2 m-1 p-1 rounded-sm bg-slate-900 overflow-y-scroll'>
         <pre>
           {JSON.stringify(renderedBoxes.find(box => box.objId === activeObjId), null, 2)}
         </pre>
-      </div>
+      </div> */}
     </div>
   );
 };
