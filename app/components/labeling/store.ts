@@ -256,10 +256,11 @@ export const createLabelingStore = () => {
           ...objectToUpdate,
           timeline: remainingTimeline
         }
-
         const newLabelData = {
           ...labelData,
-          objects: labelData.objects.map(obj => obj.id === objId ? updatedObject : obj)
+          objects: Object.keys(updatedObject.timeline).length === 0 ?
+              labelData.objects.filter(obj => obj.id !== objId)
+            : labelData.objects.map(obj => obj.id === objId ? updatedObject : obj)
         }
 
         set({ labelData: newLabelData })

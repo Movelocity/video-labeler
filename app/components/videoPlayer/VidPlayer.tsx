@@ -46,12 +46,6 @@ export const VidPlayer: FC<PlayerProps> = (({video_path, label_path}) => {
     return { width: videoWidth, height: videoHeight };
   }, [windowWidth, windowHeight, videoPlayer.videoShapeRatio]);
   const videoSize = calculateVideoSize();
-  
-  const updateProgressView = useCallback((fraction:number)=> {
-    videoPlayer.seekTo(fraction);
-    // setActiveProgress(fraction);
-  }, [videoPlayer])
-
 
   const [hasWindow, setHasWindow] = useState(false);  // 防止在服务端触发渲染
   const hasInit = useRef(false);
@@ -85,21 +79,6 @@ export const VidPlayer: FC<PlayerProps> = (({video_path, label_path}) => {
 
     return () => clearInterval(interval);
   }, [videoPlayer.playing]);
-
-  // 暴露方法给外部
-  // useImperativeHandle(ref, () => ({
-  //   seekTo: (fraction: number) => {
-  //     updateProgressView(fraction);
-  //     setVideoProgress(fraction)
-  //   },
-  //   getCurrentTime: () => {
-  //     const player = videoPlayer.playerRef.current?.getInternalPlayer() as HTMLVideoElement;
-  //     return player ? player.currentTime : 0;
-  //   },
-  //   getDuration: () => {
-  //     return videoPlayer.duration;
-  //   }
-  // }));
 
   return (
     <div className='flex flex-row'>

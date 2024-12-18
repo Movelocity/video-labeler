@@ -201,7 +201,7 @@ async function handleDeleteV2(searchParams: URLSearchParams) {
 
       // 如果对象没有任何时间点了，则删除整个对象
       if (Object.keys(targetObject.timeline).length === 0) {
-        data.objects = data.objects.filter(obj => obj.label !== obj_id);
+        data.objects = data.objects.filter(obj => obj.id !== obj_id);
       }
     }
 
