@@ -36,7 +36,7 @@ export const FileList = () => {
 
   useEffect(() => {
     loadFiles(directory)
-  }, [directory])
+  }, [loadFiles, directory])
 
   if (isLoading) {
     return (

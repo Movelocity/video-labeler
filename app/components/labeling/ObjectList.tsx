@@ -25,7 +25,7 @@ const ObjectItem = ({
   isSelected, 
   isActive, 
   onSelect, 
-  onActivate,
+  // onActivate,
   onEdit 
 }: ObjectItemProps & { onEdit: () => void }) => {
   const handleClick = () => {

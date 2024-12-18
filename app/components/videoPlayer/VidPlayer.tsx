@@ -6,7 +6,6 @@ import { useVideoPlayer } from '@/components/videoPlayer/hooks/useVideoPlayer';
 import { useKeyboardShortcuts } from '@/components/videoPlayer/hooks/useKeyboardShortcuts';
 import { VideoControls } from '@/components/videoPlayer/_partial/VideoControls';
 import { videoService } from '@/service/video';
-import { useLabelingStore } from '@/components/labeling/store/labelingStore';
 import { useLabeling } from '@/components/labeling/hooks/useLabeling';
 import VideoProgress from '@/components/videoPlayer/_partial/VideoProgress';
 import { CanvasLayer } from '@/components/BoxesLayer/CanvasLayer';

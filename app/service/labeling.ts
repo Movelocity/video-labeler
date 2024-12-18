@@ -15,7 +15,7 @@ interface LabelObject {
   timeline: TimelineEntry;
 }
 
-/** 标注服务 */
+/** 标注服务，新增功能一律使用 V2 API, 不要编辑 V1 API */
 export const labelingService = {
   // V1 API 兼容接口
   async readLabels(video_path: string, label_path: string): Promise<LabelData[]> {
@@ -32,6 +32,7 @@ export const labelingService = {
     }));
   },
 
+  // V1 API 兼容接口
   async saveLabeling(params: SaveLabelingParams, label_path: string): Promise<void> {
     await fetch(`/api/labeling?action=write&video_path=${params.video_path}&label_path=${label_path}`, {
       method: 'POST',
@@ -42,6 +43,7 @@ export const labelingService = {
     });
   },
 
+  // V1 API 兼容接口
   async deleteLabeling(video_path: string, time: number, label_path: string): Promise<void> {
     await fetch(`/api/labeling?action=delete&video_path=${video_path}&time=${time}&label_path=${label_path}`, {
       method: 'DELETE',

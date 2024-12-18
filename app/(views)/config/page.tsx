@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react';
-import { PathConfig } from '@/components/files/PathConfig';
-import { FilePreview } from '@/components/files/FilePreview';
+// import { PathConfig } from '@/components/files/PathConfig';
+// import { FilePreview } from '@/components/files/FilePreview';
 
 export default function Home() {
 

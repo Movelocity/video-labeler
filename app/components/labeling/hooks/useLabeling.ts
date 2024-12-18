@@ -1,4 +1,4 @@
-import { LabelDataV2, AnchorBox, LabelObject } from '@/lib/types';
+import { AnchorBox, LabelObject } from '@/lib/types';
 import { useEffect, useRef } from 'react';
 import { useLabelingStore } from '../store/labelingStore';
 import { TIME_DIFF_THRESHOLD } from '@/lib/constants';
@@ -11,10 +11,11 @@ export const useLabeling = () => {
   // Load label data when path changes
   useEffect(() => {
     if (!store.label_path || store.label_path === prevPathRef.current) {
+      console.log("### skipping ###");
       return;
     }
     
-    console.log("Label path changed:", store.label_path);
+    console.log("Label path changed:", store.label_path, "from", prevPathRef.current);
     prevPathRef.current = store.label_path;
     store.loadLabelData(store.label_path);
   }, [store.label_path]);

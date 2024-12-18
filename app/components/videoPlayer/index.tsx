@@ -168,13 +168,13 @@ const Player = (props: {video_path: string, label_path: string}) => {
     });
 
     // 删除服务器数据
-    Promise.all(Array.from(labelsToDelete).map(label =>
-      labelingService.deleteLabelingV2({
-        video_path: props.video_path,
-        label,
-        time: activeProgress
-      }, props.label_path)
-    ));
+    // Promise.all(Array.from(labelsToDelete).map(label =>
+    //   labelingService.deleteLabelingV2({
+    //     video_path: props.video_path,
+    //     label,
+    //     time: activeProgress
+    //   }, props.label_path)
+    // ));
 
     boxesLayerRef.current?.setBoxes([]);
   }, [activeProgress, props.video_path, props.label_path]);

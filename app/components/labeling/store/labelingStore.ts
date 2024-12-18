@@ -72,11 +72,12 @@ export const useLabelingStore = create<LabelingState>((set, get) => ({
   setActiveObjId: (objId) => set({ activeObjId: objId }),
   
   // Core data operations
-  loadLabelData: async (label_path) => {
-    const { video_path } = get();
+  loadLabelData: async (new_label_path) => {
+    const { video_path, label_path } = get();
+    // if(new_label_path === label_path) return;
     try {
-      console.log('Reading labels from:', label_path);
-      const data = await labelingService.readLabelsV2(video_path, label_path);
+      console.log('Reading labels from:\n', new_label_path, "\nlabel_path:\n", label_path);
+      const data = await labelingService.readLabelsV2(video_path, new_label_path);
       if (data) set({ labelData: data });
     } catch (error) {
       console.error('Error reading labels:', error);
