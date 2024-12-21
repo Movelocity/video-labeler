@@ -25,23 +25,23 @@ export const VideoControls = ({
   const setVideoProgress = useStore(state => state.setVideoProgress)
   const activeObjId = useStore(state => state.activeObjId)
 
-  const handleAddKeyFrame = () => {
-    const { activeObjId, renderedBoxes, videoProgress } = labelingStore.getState()
-    const activeObjData = getActiveObjectData(labelingStore.getState())
+  // const handleAddKeyFrame = () => {
+  //   const { activeObjId, renderedBoxes, videoProgress } = labelingStore.getState()
+  //   const activeObjData = getActiveObjectData(labelingStore.getState())
 
-    if(!activeObjId || !activeObjData) return
-    const targetBox = renderedBoxes.find(box => box.objId === activeObjId)
-    if(targetBox) {
-      saveKeyFrame(activeObjId, videoProgress, {...targetBox, objId: undefined, color: undefined})
-    } else {
-      addKeyFrame(activeObjId, videoProgress)
-    }
-    setVideoProgress(videoProgress+0.0000001)
-    setVideoProgress(videoProgress-0.0000001)
-  }
+  //   if(!activeObjId || !activeObjData) return
+  //   const targetBox = renderedBoxes.find(box => box.objId === activeObjId)
+  //   if(targetBox) {
+  //     saveKeyFrame(activeObjId, videoProgress, {...targetBox, objId: undefined, color: undefined})
+  //   } else {
+  //     addKeyFrame(activeObjId, videoProgress)
+  //   }
+  //   setVideoProgress(videoProgress+0.0000001)
+  //   setVideoProgress(videoProgress-0.0000001)
+  // }
 
   const handleSaveKeyFrame = async () => {
-    const { activeObjId, renderedBoxes, videoProgress } = labelingStore.getState()
+    const { activeObjId, renderedBoxes, videoProgress, tempBox } = labelingStore.getState()
     const activeObjData = getActiveObjectData(labelingStore.getState())
 
     if(!activeObjId || !activeObjData) return
@@ -49,7 +49,10 @@ export const VideoControls = ({
     if(targetBox) {
       await saveKeyFrame(activeObjId, videoProgress, {...targetBox, objId: undefined, color: undefined})
       setVideoProgress(videoProgress+0.0000001)
-    } 
+    } else if(tempBox) {
+      addKeyFrame(activeObjId, videoProgress)
+      await saveKeyFrame(activeObjId, videoProgress, {...tempBox, objId: undefined, color: undefined})
+    }
   }
 
   const handleDeleteKeyFrame = () => {
@@ -76,7 +79,7 @@ export const VideoControls = ({
       </div>
 
       <div className={cn("flex flex-row justify-end py-1 mt-2", !activeObjId&&"invisible")}>
-        <button
+        {/**<button
           title="在当前播放进度添加关键帧"
           className="mx-2 px-1 rounded-md bg-green-700 hover:bg-green-800"
           onClick={()=> {
@@ -84,7 +87,7 @@ export const VideoControls = ({
           }}
         >
           Add
-        </button>
+        </button>*/}
         <button
           title="更新关键帧"
           className="mx-2 px-1 rounded-md bg-green-700 hover:bg-green-800"

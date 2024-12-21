@@ -56,3 +56,8 @@ export interface LabelDataV2 {
   objects: LabelObject[];
   version: 2;
 }
+
+/**检测是否为旧版标签文件*/
+export const isLegacyFormat = (data: any): data is LabelDataV1 => {
+  return !('version' in data) || !('objects' in data);
+};

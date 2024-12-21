@@ -4,10 +4,7 @@ import path from 'path';
 import { getConfig } from '../config';
 export const runtime = "nodejs";
 import { supportedExtensions } from '@/lib/videos';
-import { type FileInfo } from '@/lib/types'
-
-// 获取配置
-// const { VIDEO_ROOT, LABELS_ROOT } = getConfig();
+import { type FileInfo, LabelDataV1, LabelDataV2, isLegacyFormat, LabelObject } from '@/lib/types'
 
 // 构造 video_path -> label_path 的映射
 function createVideoLabelMap(videoRoot: string, labelsRoot: string) {
@@ -55,17 +52,22 @@ function extractLabelsFromFile(labelFilePath: string): string[] {
 
   const fileContent = fs.readFileSync(labelFilePath, 'utf8');
   try {
-    const jsonData = JSON.parse(fileContent);
+    const data: LabelDataV1 | LabelDataV2 = JSON.parse(fileContent);
     const labelSet = new Set<string>();
-
-    for (const key in jsonData.labels) {
-      const labelEntries = jsonData.labels[key];
-      // console.log("labelEntries", labelEntries)
-      labelEntries.forEach((entry: any) => {
-        if (entry.label) {
-          labelSet.add(entry.label);
-        }
-      });
+    if(isLegacyFormat(data)) {
+      for (const key in data.labels) {
+        const labelEntries = data.labels[key];
+        // console.log("labelEntries", labelEntries)
+        labelEntries.forEach((entry: any) => {
+          if (entry.label) {
+            labelSet.add(entry.label);
+          }
+        });
+      }
+    } else {
+      (data as LabelDataV2).objects.forEach((obj) => {
+        labelSet.add(obj.label);
+      })
     }
 
     return Array.from(labelSet);

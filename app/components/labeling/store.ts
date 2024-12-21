@@ -12,6 +12,7 @@ type StoreStateValues = {
   video_path: string
   label_path: string
   labelData: LabelDataV2 | undefined
+  tempBox: AnchorBox | null
   selectedIds: string[]
   activeObjId: string | null
   videoProgress: number
@@ -29,9 +30,9 @@ type StoreActions = {
   setLabelPath: (path: string) => void
   // setPaths: (video_path: string, label_path: string) => void
   setLabelData: (data: LabelDataV2) => void
+  setTempBox: (box: AnchorBox) => void
   setVideoProgress: (progress: number) => void
   setRenderedBoxes: (boxes: AnchorBox[]) => void
-
 
   // Selection operations
   toggleObjectSelection: (objId: string) => void
@@ -74,6 +75,7 @@ export const createLabelingStore = () => {
       video_path: '',
       label_path: '',
       labelData: undefined,
+      tempBox: null,
       selectedIds: [],
       activeObjId: null,
       renderedBoxes: [],
@@ -89,7 +91,7 @@ export const createLabelingStore = () => {
       setLabelData: (data) => set({ labelData: data }),
       setVideoProgress: (progress) => set({ videoProgress: progress }),
       setRenderedBoxes: (boxes) => set({ renderedBoxes: boxes }),
-
+      setTempBox: (box) => set({tempBox: box}),
       // Selection operations
       toggleObjectSelection: (objId) => {
         const { selectedIds, activeObjId } = get()
