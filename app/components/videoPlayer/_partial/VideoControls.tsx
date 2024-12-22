@@ -25,21 +25,6 @@ export const VideoControls = ({
   const setVideoProgress = useStore(state => state.setVideoProgress)
   const activeObjId = useStore(state => state.activeObjId)
 
-  // const handleAddKeyFrame = () => {
-  //   const { activeObjId, renderedBoxes, videoProgress } = labelingStore.getState()
-  //   const activeObjData = getActiveObjectData(labelingStore.getState())
-
-  //   if(!activeObjId || !activeObjData) return
-  //   const targetBox = renderedBoxes.find(box => box.objId === activeObjId)
-  //   if(targetBox) {
-  //     saveKeyFrame(activeObjId, videoProgress, {...targetBox, objId: undefined, color: undefined})
-  //   } else {
-  //     addKeyFrame(activeObjId, videoProgress)
-  //   }
-  //   setVideoProgress(videoProgress+0.0000001)
-  //   setVideoProgress(videoProgress-0.0000001)
-  // }
-
   const handleSaveKeyFrame = async () => {
     const { activeObjId, renderedBoxes, videoProgress, tempBox } = labelingStore.getState()
     const activeObjData = getActiveObjectData(labelingStore.getState())
@@ -52,6 +37,7 @@ export const VideoControls = ({
     } else if(tempBox) {
       addKeyFrame(activeObjId, videoProgress)
       await saveKeyFrame(activeObjId, videoProgress, {...tempBox, objId: undefined, color: undefined})
+      setVideoProgress(videoProgress+0.0000001)
     }
   }
 

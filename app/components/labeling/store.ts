@@ -150,7 +150,7 @@ export const createLabelingStore = () => {
           ...objectToUpdate,
           label: newName
         }
-
+        set({ labelData: { ...labelData, objects: labelData.objects.map(obj => obj.id === objId ? updatedObject : obj) } })
         try {
           await labelingService.saveLabelingV2(video_path, [updatedObject], label_path)
         } catch (error) {

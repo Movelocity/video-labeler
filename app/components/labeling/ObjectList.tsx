@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { act, useMemo, useState } from 'react';
 import { autoIncrementId, randomColor } from '@/lib/utils';
 import { useLabelingStore, useStore } from '@/components/labeling/store';
 import cn from 'classnames';
@@ -73,6 +73,7 @@ export const ObjectList = () => {
   const [editingObject, setEditingObject] = useState<{id: string, label: string} | null>(null);
   const [newObjectLabel, setNewObjectLabel] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [version, setVersion] = useState(0);
   
   const objectsWithColor = useMemo(() => {
     return labelData?.objects.map(obj => ({
@@ -80,7 +81,7 @@ export const ObjectList = () => {
       color: obj.color || randomColor(),
       timelineCount: Object.keys(obj.timeline).length
     }));
-  }, [labelData?.objects]);
+  }, [labelData?.objects, version]);
 
   const handleObjectSelect = (objId: string) => {
     const { toggleObjectSelection, setActiveObjId } = labelingStore.getState()
@@ -116,6 +117,7 @@ export const ObjectList = () => {
     const { renameObj } = labelingStore.getState()
     await renameObj(editingObject.id, editingObject.label.trim());
     setEditingObject(null);
+    setVersion(v => v + 1);
   };
 
   if (objectsWithColor?.length === 0 && !isCreating) {
@@ -138,7 +140,10 @@ export const ObjectList = () => {
   return (
     <div className="flex flex-col gap-4 w-[30%] ml-4 bg-slate-900 rounded-lg p-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-slate-200 font-medium">标注对象</h3>
+        <div className='flex flex-row gap-2 items-baseline'>
+          <h3 className="text-slate-200 font-medium">标注对象: </h3>
+          <span className="text-sm">{objectsWithColor?.find(obj => obj.id === activeObjId)?.label}</span>
+        </div>
         <button
           onClick={() => setIsCreating(true)}
           className="p-2 rounded-lg hover:bg-slate-700 text-slate-200"
