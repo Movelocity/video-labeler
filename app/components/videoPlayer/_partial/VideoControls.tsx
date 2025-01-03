@@ -64,19 +64,11 @@ export const VideoControls = ({
         </button>
       </div>
 
-      <div className={cn("flex flex-row justify-end py-1 mt-2", !activeObjId&&"invisible")}>
-        {/**<button
-          title="在当前播放进度添加关键帧"
-          className="mx-2 px-1 rounded-md bg-green-700 hover:bg-green-800"
-          onClick={()=> {
-            handleAddKeyFrame()
-          }}
-        >
-          Add
-        </button>*/}
+      <div className={cn("flex flex-row justify-end h-full py-1 ", !activeObjId&&"invisible")}>
+
         <button
           title="更新关键帧"
-          className="mx-2 px-1 rounded-md bg-green-700 hover:bg-green-800"
+          className="mx-2 px-4 rounded-md bg-green-700 hover:bg-green-800"
           onClick={()=> {
             handleSaveKeyFrame()
           }}
@@ -85,7 +77,7 @@ export const VideoControls = ({
         </button>
         <button
           title="删除当前对应的关键帧"
-          className="mx-2 px-1 rounded-md bg-rose-700 hover:bg-rose-800"
+          className="mx-2 px-4 rounded-md bg-rose-700 hover:bg-rose-800"
           onClick={()=> {
             handleDeleteKeyFrame()
           }}

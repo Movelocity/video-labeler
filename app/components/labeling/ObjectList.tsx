@@ -1,4 +1,4 @@
-import { act, useMemo, useState } from 'react';
+import { act, useEffect, useMemo, useRef, useState } from 'react';
 import { autoIncrementId, randomColor } from '@/lib/utils';
 import { useLabelingStore, useStore } from '@/components/labeling/store';
 import cn from 'classnames';
@@ -73,7 +73,7 @@ export const ObjectList = () => {
   const [editingObject, setEditingObject] = useState<{id: string, label: string} | null>(null);
   const [newObjectLabel, setNewObjectLabel] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const [version, setVersion] = useState(0);
+  const [version, setVersion] = useState(0);  // 控制刷新的时机，快速移动标注框而未保存，不用触发对象列表刷新
   
   const objectsWithColor = useMemo(() => {
     return labelData?.objects.map(obj => ({
@@ -119,6 +119,19 @@ export const ObjectList = () => {
     setEditingObject(null);
     setVersion(v => v + 1);
   };
+  
+  const newObjInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {  // 创建新对象的框出现时，自动聚焦
+    if(isCreating) {
+      newObjInputRef.current?.focus()
+    }
+  }, [isCreating])
+
+  useEffect(() => { // 数量变化时自动聚焦到最后一个
+    if(!objectsWithColor || objectsWithColor.length==0) return;
+    const lastObj = objectsWithColor[objectsWithColor.length-1]
+    handleObjectSelect(lastObj.id)
+  }, [objectsWithColor?.length])
 
   if (objectsWithColor?.length === 0 && !isCreating) {
     return (
@@ -153,13 +166,14 @@ export const ObjectList = () => {
       </div>
 
       {isCreating && (
-        <div className="flex gap-2 p-2 bg-slate-800 rounded-lg">
+        <div className="flex gap-2 h-10 bg-slate-800 rounded-lg">
           <input
+            ref={newObjInputRef}
             type="text"
             value={newObjectLabel}
             onChange={(e) => setNewObjectLabel(e.target.value)}
             placeholder="输入对象标签"
-            className="flex-1 px-2 py-0 w-36 bg-slate-700 rounded-md text-slate-200 outline-none focus:ring-2 focus:ring-sky-500"
+            className="flex-1 px-2 py-0 bg-slate-700 rounded-md text-slate-200 outline-none"
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleCreateObject();
               if (e.key === 'Escape') setIsCreating(false);
@@ -168,13 +182,13 @@ export const ObjectList = () => {
           />
           <button
             onClick={handleCreateObject}
-            className="px-2 py-1 rounded-md bg-sky-600 hover:bg-sky-500 text-white text-sm"
+            className="my-1 px-3 py-1 rounded-md bg-sky-600 hover:bg-sky-500 text-white text-sm"
           >
             确定
           </button>
           <button
             onClick={() => setIsCreating(false)}
-            className="px-2 py-1 rounded-md hover:bg-slate-700 text-slate-300 text-sm"
+            className="my-1 px-3 py-1 rounded-md hover:bg-slate-700 text-slate-300 text-sm"
           >
             取消
           </button>
