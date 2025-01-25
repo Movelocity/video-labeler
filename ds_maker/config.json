@@ -7,10 +7,9 @@
     "convert": {
         "fps": 3,
         "max_size": 1024,
-        "mode": "normal",
         "fusion": {
-            "enabled": true,
-            "window_seconds": 2,
+            "enabled": false,
+            "window_seconds": 1,
             "weights": [0.3, 0.4, 0.3]
         }
     },

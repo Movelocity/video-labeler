@@ -157,7 +157,7 @@ class VideoToCOCOConverter:
         frame = self._resize_frame(frame)
         
         # 如果启用了fusion模式，获取融合帧
-        if self.config.get("mode") == "fusion" and self.config["fusion"]["enabled"]:
+        if self.config["fusion"]["enabled"]:
             frame = self._get_fusion_frame(frame_idx, total_frames, video_path)
         
         # 先生成标签
