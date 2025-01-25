@@ -28,8 +28,8 @@ class VideoToCOCOConverter:
     def __init__(
         self, video_root: Union[str, Path], 
         annotation_root: Union[str, Path], 
-        output_root: Union[str, Path], 
-        fps: int = 10
+        output_root: Union[str, Path],
+        config: dict
     ):
         """
         初始化视频转COCO格式转换器
@@ -38,12 +38,13 @@ class VideoToCOCOConverter:
             video_root: 视频文件根目录
             annotation_root: 标注文件根目录
             output_root: COCO数据集输出目录
-            fps: 提取帧率 (默认: 10)
+            config: 配置字典，包含fps和fusion等设置
         """
         self.video_root = Path(video_root)
         self.annotation_root = Path(annotation_root)
         self.output_root = Path(output_root)
-        self.fps = fps
+        self.config = config["convert"]
+        self.fps = self.config["fps"]
         
         # 创建输出目录
         self.images_dir = self.output_root / "images"
@@ -155,6 +156,10 @@ class VideoToCOCOConverter:
         # 调整图像大小
         frame = self._resize_frame(frame)
         
+        # 如果启用了fusion模式，获取融合帧
+        if self.config.get("mode") == "fusion" and self.config["fusion"]["enabled"]:
+            frame = self._get_fusion_frame(frame_idx, total_frames, video_path)
+        
         # 先生成标签
         labels = self._generate_labels(annotation, current_time, frame_name)
         
@@ -178,6 +183,88 @@ class VideoToCOCOConverter:
                 frame = cv2.resize(frame, (new_width, new_height))
         
         return frame
+
+    def _get_fusion_frame(self, current_frame_idx: int, total_frames: int, video_path: Path) -> np.ndarray:
+        """
+        获取融合后的帧
+        
+        Args:
+            current_frame_idx: 当前帧索引
+            total_frames: 总帧数
+            video_path: 视频路径
+            
+        Returns:
+            融合后的帧
+        """
+        fusion_config = self.config["fusion"]
+        window_seconds = fusion_config["window_seconds"]
+        original_weights = np.array(fusion_config["weights"])
+        
+        # 计算需要的帧
+        frames_per_second = self.fps
+        window_frames = int(window_seconds * frames_per_second)
+        
+        # 确保window_frames不会超出视频长度的一半
+        window_frames = min(window_frames, total_frames // 2)
+        
+        frame_indices = []
+        weights = []
+        
+        # 计算需要的帧索引和对应的权重
+        center_weight_idx = len(original_weights) // 2
+        for i in range(-window_frames, window_frames + 1):
+            frame_idx = current_frame_idx + i
+            if 0 <= frame_idx < total_frames:
+                frame_indices.append(frame_idx)
+                # 根据与中心帧的距离选择权重
+                weight_idx = center_weight_idx + i
+                if 0 <= weight_idx < len(original_weights):
+                    weights.append(original_weights[weight_idx])
+                else:
+                    # 如果超出权重数组范围，使用最近的权重
+                    weights.append(original_weights[0] if weight_idx < 0 else original_weights[-1])
+        
+        weights = np.array(weights)
+        # 确保权重和为1
+        weights = weights / weights.sum()
+        
+        # 读取视频
+        cap = cv2.VideoCapture(str(video_path))
+        fused_frame = None
+        valid_frames = 0
+        
+        try:
+            for i, frame_idx in enumerate(frame_indices):
+                cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+                ret, frame = cap.read()
+                if ret:
+                    frame = self._resize_frame(frame)
+                    if fused_frame is None:
+                        fused_frame = np.zeros_like(frame, dtype=np.float32)
+                    fused_frame += frame * weights[i]
+                    valid_frames += 1
+                else:
+                    logger.warning(f"无法读取帧 {frame_idx} 从视频 {video_path}")
+            
+            # 只有当至少读取到一个有效帧时才进行融合
+            if fused_frame is not None and valid_frames > 0:
+                # 根据实际读取到的帧数重新归一化
+                fused_frame = fused_frame * (len(weights) / valid_frames)
+                fused_frame = np.clip(fused_frame, 0, 255).astype(np.uint8)
+            else:
+                logger.error(f"无法读取任何帧用于融合，位置: {current_frame_idx}")
+                # 尝试直接读取当前帧
+                cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame_idx)
+                ret, fused_frame = cap.read()
+                if ret:
+                    fused_frame = self._resize_frame(fused_frame)
+                else:
+                    logger.error(f"无法读取当前帧 {current_frame_idx}")
+                    fused_frame = np.zeros((1024, 1024, 3), dtype=np.uint8)
+        finally:
+            cap.release()
+            
+        return fused_frame
 
     def save_label_map(self):
         """Save the label mapping to a YAML file"""
@@ -257,15 +344,11 @@ def main():
     annotation_root = paths_config["annotation_root"]
     output_root = paths_config["output_root"]
     
-    # Get conversion settings
-    convert_config = config["convert"]
-    fps = int(convert_config["fps"])
-    
     converter = VideoToCOCOConverter(
         video_root=video_root,
         annotation_root=annotation_root,
         output_root=output_root,
-        fps=fps
+        config=config
     )
     
     # 转换所有视频

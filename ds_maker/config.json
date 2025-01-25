@@ -1,0 +1,31 @@
+{
+    "paths": {
+        "video_root": "C:/datasets/sample",
+        "annotation_root": "C:/datasets/sample",
+        "output_root": "C:/datasets/sample/export"
+    },
+    "convert": {
+        "fps": 3,
+        "max_size": 1024,
+        "mode": "normal",
+        "fusion": {
+            "enabled": true,
+            "window_seconds": 2,
+            "weights": [0.3, 0.4, 0.3]
+        }
+    },
+    "split": {
+        "train_ratio": 0.7,
+        "val_ratio": 0.2,
+        "test_ratio": 0.1
+    },
+    "preview": {
+        "window_title": "Dataset Preview",
+        "window_width": 1280,
+        "window_height": 720
+    },
+    "logging": {
+        "level": "INFO",
+        "format": "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{message}</cyan>"
+    }
+} 
