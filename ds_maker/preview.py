@@ -5,6 +5,8 @@ import numpy as np
 from pathlib import Path
 import argparse
 from pynput import keyboard
+from loguru import logger
+from .config import load_config, setup_logging
 
 class DatasetPreviewer:
     def __init__(self, dataset_path: str|Path):
@@ -222,19 +224,24 @@ class DatasetPreviewer:
 def main():
     parser = argparse.ArgumentParser(description='Preview COCO format dataset with annotations')
     parser.add_argument('dataset_path', help='Path to dataset root directory containing data.yaml')
+    parser.add_argument('--config', default='config.txt', help='Path to config file')
     args = parser.parse_args()
     
     try:
+        # Load config and setup logging
+        config = load_config(args.config)
+        setup_logging(config)
+        
         # Convert to absolute path and resolve any Windows path issues
         dataset_path = Path(args.dataset_path).resolve()
         if not dataset_path.exists():
             raise FileNotFoundError(f"Dataset path does not exist: {dataset_path}")
             
-        print(f"Loading dataset from: {dataset_path}")
+        logger.info(f"Loading dataset from: {dataset_path}")
         previewer = DatasetPreviewer(dataset_path)
         previewer.preview()
     except Exception as e:
-        print(f"Error: {str(e)}")
+        logger.error(f"Error: {str(e)}")
         
 if __name__ == "__main__":
     main()

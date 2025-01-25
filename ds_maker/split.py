@@ -1,6 +1,6 @@
 """
 Split a COCO dataset into train/val/test sets according to provided ratios.
-Usage: python split.py <dataset_root> --train 0.7 --val 0.2 [--test 0.1]
+Usage: python split.py <dataset_root> [--config config.txt]
 
 examples:
 # Split into 70% train, 20% val, 10% test
@@ -11,18 +11,20 @@ python split.py /path/to/dataset --train 0.8 --val 0.2
 """
 
 import argparse
-import os
 import random
 import shutil
 import yaml
 from pathlib import Path
+from loguru import logger
+from .config import load_config, setup_logging
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Split COCO dataset into train/val/test sets')
     parser.add_argument('dataset_root', type=str, help='Root directory of COCO dataset')
-    parser.add_argument('--train', type=float, required=True, help='Training set ratio (e.g., 0.7)')
-    parser.add_argument('--val', type=float, required=True, help='Validation set ratio (e.g., 0.2)')
-    parser.add_argument('--test', type=float, default=0.0, help='Test set ratio (e.g., 0.1, optional)')
+    parser.add_argument('--config', default='config.txt', help='Path to config file')
+    parser.add_argument('--train', type=float, help='Training set ratio (e.g., 0.7)')
+    parser.add_argument('--val', type=float, help='Validation set ratio (e.g., 0.2)')
+    parser.add_argument('--test', type=float, help='Test set ratio (e.g., 0.1)')
     return parser.parse_args()
 
 def validate_ratios(train_ratio, val_ratio, test_ratio):
@@ -139,6 +141,27 @@ def split_dataset(args):
         if len(files) != moved_counts[split_name]:
             print(f"\nWarning: Could not move {len(files) - moved_counts[split_name]} files in {split_name} set")
 
-if __name__ == '__main__':
+def main():
     args = parse_args()
-    split_dataset(args)
+    
+    # Load config
+    config = load_config(args.config)
+    setup_logging(config)
+    
+    # Get split ratios from config if not provided in args
+    split_config = config["split"]
+    if args.train is None:
+        args.train = float(split_config["train_ratio"])
+    if args.val is None:
+        args.val = float(split_config["val_ratio"])
+    if args.test is None:
+        args.test = float(split_config["test_ratio"])
+    
+    try:
+        split_dataset(args)
+        logger.success("Dataset split complete")
+    except Exception as e:
+        logger.error(f"Error splitting dataset: {str(e)}")
+
+if __name__ == '__main__':
+    main()

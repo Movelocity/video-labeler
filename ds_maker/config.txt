@@ -1,0 +1,29 @@
+# Dataset Maker Configuration
+
+[paths]
+# Default paths for video and annotation processing
+video_root = "C:/datasets/sample"
+annotation_root = "C:/datasets/sample"
+output_root = "C:/datasets/sample/export"
+
+[convert]
+# Video to COCO dataset conversion settings
+fps = 3  # Frames per second to extract
+max_size = 1024  # Maximum image dimension
+
+[split]
+# Dataset split ratios
+train_ratio = 0.7
+val_ratio = 0.2
+test_ratio = 0.1
+
+[preview]
+# Preview window settings
+window_title = "Dataset Preview"
+window_width = 1280
+window_height = 720
+
+[logging]
+# Logging configuration
+level = "INFO"
+format = "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{message}</cyan>" 

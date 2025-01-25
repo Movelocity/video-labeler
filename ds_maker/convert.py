@@ -1,11 +1,15 @@
-import os
 import json
 import cv2
 from pathlib import Path
 import numpy as np
-from typing import Dict, List, Optional, Union
+from typing import Dict, Optional, Union
 from tqdm import tqdm
-import logging
+from loguru import logger
+from .config import load_config, setup_logging
+
+"""
+根据标注文件，从标注视频提取对应图片，保存到指定路径
+"""
 
 # Helper function to format time as a string key with 7 characters
 def extract_keyframe(timeline: dict, time_key :Optional[str|float]):
@@ -16,10 +20,12 @@ def extract_keyframe(timeline: dict, time_key :Optional[str|float]):
     return timeline.get(key, None)
 
 class VideoToCOCOConverter:
-    def __init__(self, video_root: Union[str, Path], 
-                 annotation_root: Union[str, Path], 
-                 output_root: Union[str, Path], 
-                 fps: int = 10):
+    def __init__(
+        self, video_root: Union[str, Path], 
+        annotation_root: Union[str, Path], 
+        output_root: Union[str, Path], 
+        fps: int = 10
+    ):
         """
         初始化视频转COCO格式转换器
         
@@ -29,9 +35,6 @@ class VideoToCOCOConverter:
             output_root: COCO数据集输出目录
             fps: 提取帧率 (默认: 10)
         """
-        # 设置日志
-        self._setup_logging()
-        
         self.video_root = Path(video_root)
         self.annotation_root = Path(annotation_root)
         self.output_root = Path(output_root)
@@ -47,46 +50,24 @@ class VideoToCOCOConverter:
         self.label_map: Dict[str, int] = {}
         self.next_label_id: int = 0
         
-        self.logger.info(f"初始化完成. 输出目录: {self.output_root}")
+        logger.info(f"初始化完成. 输出目录: {self.output_root}")
     
-    def _setup_logging(self) -> None:
-        """配置日志系统"""
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.INFO)
-        
-        # 创建控制台处理器
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.INFO)
-        
-        # 创建文件处理器
-        file_handler = logging.FileHandler('convert.log', encoding='utf-8')
-        file_handler.setLevel(logging.INFO)
-        
-        # 创建格式器
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        console_handler.setFormatter(formatter)
-        file_handler.setFormatter(formatter)
-        
-        # 添加处理器
-        self.logger.addHandler(console_handler)
-        self.logger.addHandler(file_handler)
-
     def find_annotation_file(self, video_path: Path) -> Optional[Path]:
         """查找视频对应的标注文件"""
         video_name = video_path.name
         
         # 首先尝试递归搜索
         for json_path in self.annotation_root.rglob(f"{video_name}.json"):
-            self.logger.debug(f"找到标注文件: {json_path}")
+            logger.debug(f"找到标注文件: {json_path}")
             return json_path
             
         # 尝试.cache文件夹作为备选
         cache_path = self.annotation_root / ".cache" / f"{video_name}.json"
         if cache_path.exists():
-            self.logger.debug(f"在cache中找到标注文件: {cache_path}")
+            logger.debug(f"在cache中找到标注文件: {cache_path}")
             return cache_path
             
-        self.logger.warning(f"未找到视频 {video_path} 的标注文件")
+        logger.warning(f"未找到视频 {video_path} 的标注文件")
         return None
     
     def get_label_id(self, label_name):
@@ -95,8 +76,6 @@ class VideoToCOCOConverter:
             self.label_map[label_name] = self.next_label_id
             self.next_label_id += 1
         return self.label_map[label_name]
-    
-    
 
     def interpolate_bbox(self, timeline, frame_time):
         """Interpolate bounding box for a given frame time"""
@@ -126,15 +105,16 @@ class VideoToCOCOConverter:
     def convert_video(self, video_path: Path) -> None:
         """转换单个视频到COCO格式"""
         video_path = Path(video_path)
-        self.logger.info(f"开始处理视频: {video_path}")
+        logger.info(f"开始处理视频: {video_path}")
         
         annotation_path = self.find_annotation_file(video_path)
         if not annotation_path:
-            self.logger.error(f"未找到标注文件: {video_path}")
+            logger.error(f"未找到标注文件: {video_path}")
             return
+        logger.info(f"标注文件: {annotation_path.name}")
             
         # 加载标注
-        with open(annotation_path) as f:
+        with open(annotation_path, encoding="utf-8") as f:
             annotation = json.load(f)
             
         # 打开视频
@@ -158,7 +138,7 @@ class VideoToCOCOConverter:
                 pbar.update(1)
         
         cap.release()
-        self.logger.info(f"视频处理完成: {video_path}")
+        logger.info(f"视频处理完成: {video_path}")
 
     def _process_frame(self, frame: np.ndarray, frame_idx: int, 
                       total_frames: int, video_path: Path, 
@@ -170,11 +150,12 @@ class VideoToCOCOConverter:
         # 调整图像大小
         frame = self._resize_frame(frame)
         
-        # 保存图像
-        cv2.imwrite(str(self.images_dir / f"{frame_name}.jpg"), frame)
+        # 先生成标签
+        labels = self._generate_labels(annotation, current_time, frame_name)
         
-        # 生成标签
-        self._generate_labels(annotation, current_time, frame_name)
+        # 只有当有标签时才保存图片
+        if labels:
+            cv2.imwrite(str(self.images_dir / f"{frame_name}.jpg"), frame)
 
     def _resize_frame(self, frame: np.ndarray) -> np.ndarray:
         """调整帧大小，确保不超过1024像素"""
@@ -205,16 +186,15 @@ class VideoToCOCOConverter:
     def convert_all(self) -> None:
         """转换视频根目录下的所有视频"""
         video_files = list(self.video_root.glob("**/*.mp4"))
-        self.logger.info(f"找到 {len(video_files)} 个视频文件")
+        logger.info(f"找到 {len(video_files)} 个视频文件")
         
         for video_path in tqdm(video_files, desc="处理视频"):
-            if not "Screenrecorder-2024-12-03-01-25-10-623" in video_path.name: continue
             self.convert_video(video_path)
         
         self.save_label_map()
-        self.logger.info("所有视频处理完成")
+        logger.success("所有视频处理完成")
 
-    def _generate_labels(self, annotation: Dict, current_time: float, frame_name: str) -> None:
+    def _generate_labels(self, annotation: Dict, current_time: float, frame_name: str) -> list:
         """
         生成COCO格式的标签文件
         
@@ -223,24 +203,22 @@ class VideoToCOCOConverter:
             current_time: 当前帧的归一化时间 (0-1)
             frame_name: 帧文件名
         
-        生成格式: class_id x_center y_center width height
-        每行一个目标，坐标都是归一化的 (0-1)
+        Returns:
+            list: 标签列表，如果没有标签则为空列表
         """
         labels = []
         
         for obj in annotation['objects']:
-            # try:
             bbox = self.interpolate_bbox(obj['timeline'], current_time)
             if bbox:
                 # 获取标签ID
                 label_id = self.get_label_id(obj['label'])
                 
                 # 转换为YOLO格式 (x_center, y_center, width, height)
-                # 注意：所有值都应该在0-1之间
-                x_center = bbox['sx'] + bbox['w']/2  # 中心点x坐标
-                y_center = bbox['sy'] + bbox['h']/2  # 中心点y坐标
-                width = bbox['w']      # 宽度
-                height = bbox['h']     # 高度
+                x_center = bbox['sx'] + bbox['w']/2
+                y_center = bbox['sy'] + bbox['h']/2
+                width = bbox['w']
+                height = bbox['h']
                 
                 # 确保所有值都在0-1范围内
                 x_center = max(0, min(1, x_center))
@@ -248,11 +226,8 @@ class VideoToCOCOConverter:
                 width = max(0, min(1, width))
                 height = max(0, min(1, height))
                 
-                # 格式化为COCO标签字符串
                 label_str = f"{label_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}"
                 labels.append(label_str)
-            # except Exception as e:
-            #     self.logger.warn(f"解析失败 {obj.get('label', '')} {current_time} {e}")
         
         # 如果有标签，保存到文件
         if labels:
@@ -260,30 +235,36 @@ class VideoToCOCOConverter:
             try:
                 with open(label_file, 'w') as f:
                     f.write('\n'.join(labels))
-                self.logger.debug(f"保存标签文件: {label_file}")
+                logger.debug(f"保存标签文件: {label_file}")
             except Exception as e:
-                self.logger.error(f"保存标签文件失败 {label_file}: {str(e)}")
+                logger.error(f"保存标签文件失败 {label_file}: {str(e)}")
+        
+        return labels
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    # Load config and setup logging
+    config = load_config()
+    setup_logging(config)
     
-    # 示例用法
-    video_root = "G:/yuanshen_vid"
-    annotation_root = "G:/yuanshen_vid"
-    output_root = "G:/yuanshen_vid/export"
+    # Get paths from config
+    paths_config = config["paths"]
+    video_root = paths_config["video_root"]
+    annotation_root = paths_config["annotation_root"]
+    output_root = paths_config["output_root"]
+    
+    # Get conversion settings
+    convert_config = config["convert"]
+    fps = int(convert_config["fps"])
     
     converter = VideoToCOCOConverter(
         video_root=video_root,
         annotation_root=annotation_root,
         output_root=output_root,
-        fps=3
+        fps=fps
     )
     
     # 转换所有视频
     converter.convert_all()
     
-    # 或转换单个视频
-    # converter.convert_video("path/to/specific/video.mp4")
-    
-    print("Label mapping:")
+    print("\nLabel mapping:")
     print(converter.label_map)
