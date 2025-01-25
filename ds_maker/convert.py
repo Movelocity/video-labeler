@@ -5,7 +5,12 @@ import numpy as np
 from typing import Dict, Optional, Union
 from tqdm import tqdm
 from loguru import logger
-from .config import load_config, setup_logging
+
+# Try relative import for package usage, fall back to absolute import for direct script usage
+try:
+    from .config import load_config, setup_logging
+except ImportError:
+    from config import load_config, setup_logging
 
 """
 根据标注文件，从标注视频提取对应图片，保存到指定路径
@@ -241,7 +246,7 @@ class VideoToCOCOConverter:
         
         return labels
 
-if __name__ == "__main__":
+def main():
     # Load config and setup logging
     config = load_config()
     setup_logging(config)
@@ -268,3 +273,6 @@ if __name__ == "__main__":
     
     print("\nLabel mapping:")
     print(converter.label_map)
+
+if __name__ == "__main__":
+    main()

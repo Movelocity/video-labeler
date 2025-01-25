@@ -16,7 +16,12 @@ import shutil
 import yaml
 from pathlib import Path
 from loguru import logger
-from .config import load_config, setup_logging
+
+# Try relative import for package usage, fall back to absolute import for direct script usage
+try:
+    from .config import load_config, setup_logging
+except ImportError:
+    from config import load_config, setup_logging
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Split COCO dataset into train/val/test sets')

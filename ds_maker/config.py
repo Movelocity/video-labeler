@@ -18,7 +18,7 @@ def load_config(config_path: str | Path = "config.txt") -> configparser.ConfigPa
     """
     config = configparser.ConfigParser()
     config_path = Path(config_path)
-    
+
     if not config_path.exists():
         logger.warning(f"Config file not found at {config_path}, using defaults")
         # Set defaults
@@ -46,6 +46,7 @@ def load_config(config_path: str | Path = "config.txt") -> configparser.ConfigPa
             "format": "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{message}</cyan>"
         }
     else:
+        logger.info(f"config_path: {config_path.absolute()}")
         config.read(config_path)
         
     return config
@@ -60,9 +61,12 @@ def setup_logging(config: configparser.ConfigParser) -> None:
     logger.remove()  # Remove default handler
     
     log_config = config["logging"]
+    # Strip quotes from level if present
+    level = log_config["level"].strip('"').strip("'")
+    
     logger.add(
         sink=lambda msg: print(msg, flush=True),
         format=log_config["format"],
-        level=log_config["level"],
+        level=level,
         colorize=True
     ) 

@@ -6,7 +6,12 @@ from pathlib import Path
 import argparse
 from pynput import keyboard
 from loguru import logger
-from .config import load_config, setup_logging
+
+# Try relative import for package usage, fall back to absolute import for direct script usage
+try:
+    from .config import load_config, setup_logging
+except ImportError:
+    from config import load_config, setup_logging
 
 class DatasetPreviewer:
     def __init__(self, dataset_path: str|Path):
@@ -223,25 +228,43 @@ class DatasetPreviewer:
 
 def main():
     parser = argparse.ArgumentParser(description='Preview COCO format dataset with annotations')
-    parser.add_argument('dataset_path', help='Path to dataset root directory containing data.yaml')
-    parser.add_argument('--config', default='config.txt', help='Path to config file')
+    parser.add_argument('dataset_path', nargs='?', help='Path to dataset root directory containing data.yaml')
     args = parser.parse_args()
-    
+    logger.info(f"args: {args}")
+
     try:
         # Load config and setup logging
-        config = load_config(args.config)
+        config = load_config()
         setup_logging(config)
+        logger.info(f"config: {config}")
+
+        # If dataset_path not provided, use output_root from config
+        if args.dataset_path is None:
+            # Strip any quotes from the path string
+            output_root = config["paths"]["output_root"].strip('"').strip("'")
+            dataset_path = Path(output_root)
+            logger.info(f"No dataset path provided, using output_root from config: {dataset_path}")
+        else:
+            dataset_path = Path(args.dataset_path).resolve()
         
-        # Convert to absolute path and resolve any Windows path issues
-        dataset_path = Path(args.dataset_path).resolve()
+        logger.info(f"dataset_path: {dataset_path}")
         if not dataset_path.exists():
             raise FileNotFoundError(f"Dataset path does not exist: {dataset_path}")
             
+        if not (dataset_path / 'data.yaml').exists():
+            raise FileNotFoundError(f"data.yaml not found in dataset path: {dataset_path}")
+            
         logger.info(f"Loading dataset from: {dataset_path}")
         previewer = DatasetPreviewer(dataset_path)
+        logger.info(f"previewer: {previewer}")
         previewer.preview()
+        
+    except FileNotFoundError as e:
+        logger.error(f"Error: {str(e)}")
+        return
     except Exception as e:
         logger.error(f"Error: {str(e)}")
+        raise
         
 if __name__ == "__main__":
     main()

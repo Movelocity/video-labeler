@@ -25,7 +25,11 @@ python convert.py
 用于 COCO 格式数据集的可视检查工具，带有边界框可视化。
 
 ```bash
+# 使用指定的数据集路径
 python preview.py <dataset_path>
+
+# 使用配置文件中的 output_root 路径
+python preview.py
 ```
 
 控制：
@@ -119,3 +123,22 @@ format = "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level>
 下载 coco8 示例： https://github.com/ultralytics/assets/releases/download/v0.0.0/coco8.zip
 `
 标签中的一行是 `class x_center y_center width height`
+
+
+可以通过以下方式使用这些工具：
+
+直接运行脚本：
+```
+python convert.py
+python preview.py
+python split.py
+```
+
+安装为包后运行：
+```
+cd ..
+pip install -e .  # 在项目根目录下安装包
+ds-convert  # 运行转换工具
+ds-preview  # 运行预览工具
+ds-split    # 运行拆分工具
+```

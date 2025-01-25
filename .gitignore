@@ -38,3 +38,4 @@ next-env.d.ts
 
 ds_maker/coco8
 ds_maker/convert.log
+ds_maker/__pycache__
