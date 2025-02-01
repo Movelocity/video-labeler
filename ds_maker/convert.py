@@ -22,6 +22,8 @@ def extract_keyframe(timeline: dict, time_key :Optional[str|float]):
         key = f"{time_key:.5f}".ljust(7, '0')
     if type(time_key) is str:
         key = time_key.ljust(7, '0')
+    if key == "0.00000":
+        key = "0000000"  # special error in dataset, fix it by this matching
     return timeline.get(key, None)
 
 class VideoToCOCOConverter:
@@ -94,6 +96,8 @@ class VideoToCOCOConverter:
         for i in range(len(times)-1):
             if times[i] <= frame_time <= times[i+1]:
                 t1, t2 = times[i], times[i+1]
+                # print(t1, t2)
+                
                 box1 = extract_keyframe(timeline, t1)
                 box2 = extract_keyframe(timeline, t2)
                 
@@ -272,7 +276,7 @@ class VideoToCOCOConverter:
         for label, idx in sorted(self.label_map.items(), key=lambda x: x[1]):
             yaml_content += f"  {idx}: {label}\n"
             
-        with open(self.output_root / "data.yaml", 'w') as f:
+        with open(self.output_root / "data.yaml", 'w', encoding="utf-8") as f:
             f.write(yaml_content)
     
     def convert_all(self) -> None:

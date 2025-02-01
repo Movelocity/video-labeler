@@ -1,8 +1,8 @@
 {
     "paths": {
-        "video_root": "C:/datasets/sample",
-        "annotation_root": "C:/datasets/sample",
-        "output_root": "C:/datasets/sample/export"
+        "video_root": "C:/datasets/pig-1025/videos",
+        "annotation_root": "C:/datasets/pig-1025/annotations",
+        "output_root": "C:/datasets/pig-1025/export"
     },
     "convert": {
         "fps": 3,

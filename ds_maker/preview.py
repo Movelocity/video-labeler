@@ -214,6 +214,13 @@ class DatasetPreviewer:
                 if not self.delete_current():
                     self.running = False
                     return False
+            elif key.char == 'j':
+                new_idx = self.current_idx - 10
+                self.current_idx = new_idx % len(self.images)
+            elif key.char == 'k':
+                new_idx = self.current_idx + 10
+                self.current_idx = new_idx % len(self.images)
+
         except AttributeError:
             # Handle special keys if needed
             pass
