@@ -73,7 +73,7 @@ def setup_logging(config: dict) -> None:
     level = str(log_config["level"]).strip('"').strip("'")
     
     logger.add(
-        sink=lambda msg: print(msg, flush=True),
+        sink=lambda msg: print(msg.strip(), flush=True) if msg.strip() else None,
         format=log_config["format"],
         level=level,
         colorize=True

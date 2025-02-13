@@ -23,7 +23,7 @@ def extract_keyframe(timeline: dict, time_key :Optional[str|float]):
     if type(time_key) is str:
         key = time_key.ljust(7, '0')
     if key == "0.00000":
-        key = "0000000"  # special error in dataset, fix it by this matching
+        key = "0000000"  # special error in dataset, fix it by extral matching
     return timeline.get(key, None)
 
 class VideoToCOCOConverter:
@@ -57,7 +57,7 @@ class VideoToCOCOConverter:
         # 标签映射
         self.label_map: Dict[str, int] = {}
         self.next_label_id: int = 0
-        
+
         logger.info(f"初始化完成. 输出目录: {self.output_root}")
     
     def find_annotation_file(self, video_path: Path) -> Optional[Path]:
@@ -75,7 +75,7 @@ class VideoToCOCOConverter:
             logger.debug(f"在cache中找到标注文件: {cache_path}")
             return cache_path
             
-        logger.warning(f"未找到视频 {video_path} 的标注文件")
+        # logger.warning(f"未找到视频对应标注文件")
         return None
     
     def get_label_id(self, label_name):
@@ -88,6 +88,9 @@ class VideoToCOCOConverter:
     def interpolate_bbox(self, timeline, frame_time):
         """Interpolate bounding box for a given frame time"""
         times = sorted([float(t) for t in timeline.keys()])
+        
+        if not times or len(times) == 0:
+            return None
         
         # 没有对应的标注区间，返回空
         if frame_time <= times[0] or frame_time >= times[-1]:
@@ -119,13 +122,20 @@ class VideoToCOCOConverter:
         
         annotation_path = self.find_annotation_file(video_path)
         if not annotation_path:
-            logger.error(f"未找到标注文件: {video_path}")
+            logger.error(f"未找到标注文件")
             return
         logger.info(f"标注文件: {annotation_path.name}")
             
         # 加载标注
-        with open(annotation_path, encoding="utf-8") as f:
-            annotation = json.load(f)
+        try:
+            with open(annotation_path, encoding="utf-8") as f:
+                annotation = json.load(f)
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON解析错误 {annotation_path}: {str(e)}")
+            return
+        except Exception as e:
+            logger.error(f"读取标注文件失败 {annotation_path}: {str(e)}")
+            return
             
         # 打开视频
         cap = cv2.VideoCapture(str(video_path))
@@ -174,15 +184,16 @@ class VideoToCOCOConverter:
     def _resize_frame(self, frame: np.ndarray) -> np.ndarray:
         """调整帧大小，确保不超过1024像素"""
         height, width = frame.shape[:2]
-        if width > 1024:
-            scale = 1024 / width
-            new_width = 1024
+        max_size = self.config["max_size"]
+        if width > max_size:
+            scale = max_size / width
+            new_width = max_size
             new_height = int(height * scale)
             frame = cv2.resize(frame, (new_width, new_height))
             
-            if new_height > 1024:
-                scale = 1024 / new_height
-                new_height = 1024
+            if new_height > max_size:
+                scale = max_size / new_height
+                new_height = max_size
                 new_width = int(new_width * scale)
                 frame = cv2.resize(frame, (new_width, new_height))
         
@@ -307,8 +318,9 @@ class VideoToCOCOConverter:
         for obj in annotation['objects']:
             bbox = self.interpolate_bbox(obj['timeline'], current_time)
             if bbox:
-                # 获取标签ID
-                label_id = self.get_label_id(obj['label'])
+                # 获取标签ID，去除数字。
+                label = ''.join(c for c in obj['label'] if not c.isdigit())
+                label_id = self.get_label_id(label)
                 
                 # 转换为YOLO格式 (x_center, y_center, width, height)
                 x_center = bbox['sx'] + bbox['w']/2

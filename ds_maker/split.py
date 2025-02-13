@@ -161,7 +161,9 @@ def main():
         args.val = float(split_config["val_ratio"])
     if args.test is None:
         args.test = float(split_config["test_ratio"])
-    
+    if args.dataset_root is None:
+        args.dataset_root = config['paths']['output_root']
+
     try:
         split_dataset(args)
         logger.success("Dataset split complete")

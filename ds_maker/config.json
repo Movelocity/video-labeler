@@ -1,12 +1,12 @@
 {
     "paths": {
-        "video_root": "C:/datasets/pig-1025/videos",
-        "annotation_root": "C:/datasets/pig-1025/annotations",
-        "output_root": "C:/datasets/pig-1025/export"
+        "video_root": "C:/datasets/pig-labels",
+        "annotation_root": "C:/datasets/pig-labels/2025",
+        "output_root": "C:/datasets/pig-export-20250213"
     },
     "convert": {
-        "fps": 3,
-        "max_size": 1024,
+        "fps": 2,
+        "max_size": 640,
         "fusion": {
             "enabled": false,
             "window_seconds": 1,
