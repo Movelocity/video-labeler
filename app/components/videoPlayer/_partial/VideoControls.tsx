@@ -73,7 +73,7 @@ export const VideoControls = ({
             handleSaveKeyFrame()
           }}
         >
-          Save
+          标注关键帧
         </button>
         <button
           title="删除当前对应的关键帧"
@@ -82,7 +82,7 @@ export const VideoControls = ({
             handleDeleteKeyFrame()
           }}
         >
-          Delete
+          删除关键帧
         </button>
       </div>
 

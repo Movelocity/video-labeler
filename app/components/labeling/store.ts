@@ -36,6 +36,7 @@ type StoreActions = {
 
   // Selection operations
   toggleObjectSelection: (objId: string) => void
+  selectObject: (objId: string) => void
   setActiveObjId: (objId: string | null) => void
 
   // Core data operations
@@ -106,6 +107,11 @@ export const createLabelingStore = () => {
             : (!activeObjId && newSelectedIds.includes(objId) ? objId : activeObjId)
         })
       },
+      selectObject: (objId) => {
+        const { selectedIds } = get()
+        if(selectedIds.includes(objId)) return
+        set({ selectedIds: [...selectedIds, objId] })
+      },
       setActiveObjId: (objId) => set({ activeObjId: objId }),
 
       // Core data operations
@@ -173,14 +179,13 @@ export const createLabelingStore = () => {
 
         set({ labelData: newLabelData })
 
-        try {
-          const timePoints = Object.keys(objectToDelete.timeline).map(t => parseFloat(t))
+        const timePoints = Object.keys(objectToDelete.timeline).map(t => parseFloat(t))
+        if(timePoints.length === 0) {
+          await labelingService.deleteLabelingV2(video_path, objId, '', label_path)
+        } else {
           for (const time of timePoints) {
             await labelingService.deleteLabelingV2(video_path, objId, safeTimeKey(time), label_path)
           }
-        } catch (error) {
-          console.error('Error deleting object:', error)
-          set({ labelData })
         }
       },
       addKeyFrame: (objId: string, time: number) => {

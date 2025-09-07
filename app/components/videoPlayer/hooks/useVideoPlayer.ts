@@ -5,6 +5,7 @@ export const useVideoPlayer = (url: string) => {
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [videoSize, setVideoSize] = useState({ width: 0, height: 0 });
   const [videoShapeRatio, setVideoShapeRatio] = useState(16/9);
   const playerRef = useRef<ReactPlayer>(null);
   const [playbackRate, setPlaybackRate] = useState(1);
@@ -16,7 +17,10 @@ export const useVideoPlayer = (url: string) => {
   const handleReady = useCallback((player: ReactPlayer) => {
     setDuration(player.getDuration());
     const videoElement = player.getInternalPlayer() as HTMLVideoElement;
+    setVideoSize({ width: videoElement.videoWidth, height: videoElement.videoHeight });
+    console.log("videoSize: ", { width: videoElement.videoWidth, height: videoElement.videoHeight })
     setVideoShapeRatio(videoElement.videoWidth / videoElement.videoHeight);
+    console.log("videoShapeRatio: ", videoShapeRatio)
   }, []);
 
   const handleEnded = useCallback(() => {
@@ -51,6 +55,7 @@ export const useVideoPlayer = (url: string) => {
     progress,
     duration,
     videoShapeRatio,
+    videoSize,
     handleProgress,
     handleReady,
     handleEnded,

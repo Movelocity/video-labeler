@@ -14,8 +14,6 @@ export async function GET(req: NextRequest) {
   }
   const { VIDEO_ROOT } = getConfig();
   const absFilePath = path.join(VIDEO_ROOT, video_path as string)
-  console.log("read file: ", absFilePath)
-  // const filePath = "G:/pico_vid/survival/camp.mp4";
 
   if (!fs.existsSync(absFilePath) || !fs.lstatSync(absFilePath).isFile()) {
       return NextResponse.json({ msg: "文件未找到" }, { status: 404 });

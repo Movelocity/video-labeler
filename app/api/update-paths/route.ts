@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (labelsRoot && !validatePath(labelsRoot)) {
+      console.log(`路径无效: ${labelsRoot}`)
       return NextResponse.json(
         { error: "标签路径无效或不可访问" },
         { status: 400 }
@@ -68,9 +69,7 @@ export async function POST(req: NextRequest) {
     let envContent = '';
     
     try {
-      envContent = fs.existsSync(envPath) 
-        ? fs.readFileSync(envPath, 'utf-8') 
-        : '';
+      envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
     } catch (error) {
       console.error('读取 .env.local 失败:', error);
     }

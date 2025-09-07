@@ -86,7 +86,7 @@ const isVideoFile = (filePath: string) => {
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
   const directory = searchParams.get('directory') ?? "";
-  console.log("list-files", directory)
+  // console.log("list-files", directory)
   // 获取最新配置
   const { VIDEO_ROOT, LABELS_ROOT } = getConfig();
   const absDir = path.join(VIDEO_ROOT, directory);

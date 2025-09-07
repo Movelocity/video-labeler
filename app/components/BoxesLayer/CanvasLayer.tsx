@@ -9,8 +9,10 @@ import { useLabelingStore, useStore, getCurrentBoxes, getActiveObjectData } from
 import { randomColor } from '@/lib/utils';
 
 export type CanvasLayerProps = {
-  width: number;
-  height: number;
+  containerHeight: number;
+  containerWidth: number;
+  videoWidth: number;
+  videoHeight: number;
   className?: string;
 } 
 
@@ -24,12 +26,17 @@ const getRelPoint = (canvasElem: HTMLCanvasElement | null, point: Point):Point =
 }
 
 export const CanvasLayer = ({
-  width,
-  height,
+  containerHeight,
+  containerWidth,
+  videoWidth,
+  videoHeight,
   className,
 }: CanvasLayerProps) => {
   const tgBoxIdx = useRef(-1);  // 当前选中的框索引
   const [cursor, setCursor] = useState('default')  // 鼠标样式
+  const [top, setTop] = useState(0);
+  const [width, setWidth] = useState(containerWidth || 10);
+  const [height, setHeight] = useState(containerHeight || 10);
   const canvasRef = useRef<HTMLCanvasElement>(null);  // 画布 ref
   const boxesRef = useRef<AnchorBox[]>([]);        // 框列表
   
@@ -55,7 +62,6 @@ export const CanvasLayer = ({
     } else{
       draw(canvasRef.current, boxesRef.current, tgBoxIdx.current)
     }
-    
   }
 
   /** 视频进度变化时重绘 */
@@ -70,14 +76,21 @@ export const CanvasLayer = ({
   /** 窗口大小变化时重绘 */
   useEffect(() => {
     setTimeout(()=> {
-      if(canvasRef.current) {
+      if(canvasRef.current && containerWidth && videoWidth) {
         // console.log("setting canvas size:", width, height)
-        canvasRef.current.width = width
-        canvasRef.current.height = height
+        canvasRef.current.width = containerWidth
+
+        const actualHeight = videoHeight * containerWidth / videoWidth
+        canvasRef.current.height = actualHeight
+        setWidth(containerWidth)
+        setHeight(actualHeight)
+        if (containerHeight > actualHeight) {
+          setTop((containerHeight - actualHeight) / 2)
+        }
         refresh()
       }
-    }, 500)
-  }, [width, height]);
+    }, 500)  // 等videoPlayer的useEffect执行完再重绘
+  }, [containerWidth, videoWidth, videoHeight, containerHeight]);
 
   /** 鼠标按下事件 */
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -274,11 +287,11 @@ export const CanvasLayer = ({
 
   return (
     <canvas 
-      className={className+"select-none outline-none"}
+      className={className + " select-none outline-none"}
       style={{
         cursor: cursor,
         position: 'absolute',
-        top: 0,
+        top: top,
         left: 0,
         zIndex: 10
       }}
